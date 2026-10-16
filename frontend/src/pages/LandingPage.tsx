@@ -7,6 +7,7 @@ import {
   TrendingDown,
   UserPlus,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
 
@@ -326,12 +327,12 @@ function LandingPage() {
             <a className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" href="#chart">
               Statistics
             </a>
-            <a className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" href="#signin">
+            <Link className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" to="/login">
               Sign In
-            </a>
-            <a className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" href="#register">
+            </Link>
+            <Link className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" to="/register">
               Register
-            </a>
+            </Link>
           </div>
         </nav>
 
@@ -350,14 +351,14 @@ function LandingPage() {
             </p>
 
             <nav className="mt-6 flex flex-wrap gap-x-[34px] gap-y-3.5" aria-label="Primary">
-              <a className={primaryActionClass} href="#signin">
+              <Link className={primaryActionClass} to="/login">
                 <LogIn size={21} />
                 Sign In
-              </a>
-              <a className={primaryActionClass} href="#register">
+              </Link>
+              <Link className={primaryActionClass} to="/register">
                 <UserPlus size={21} />
                 Register
-              </a>
+              </Link>
               <a className={primaryActionClass} href="#about">
                 <HeartPulse size={21} />
                 About
