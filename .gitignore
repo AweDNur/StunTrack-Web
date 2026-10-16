@@ -4,3 +4,24 @@ dist/
 .env.*
 !.env.example
 coverage/
+
+# Virtual Environment
+ai-service/.venv/
+ai-service/venv/
+ai-service/env/
+
+# Byte-compiled / Python Cache
+ai-service/**/__pycache__/
+ai-service/**/*.pyc
+ai-service/**/*.pyo
+ai-service/**/*.pyd
+
+# Temporary Uploads (abaikan isinya, tapi jaga foldernya jika ada .gitkeep)
+ai-service/uploads/*
+!ai-service/uploads/.gitkeep
+
+# Optional: Model files (Buka comment ini jika ukuran file model > 100MB)
+# ai-service/*.joblib
+# ai-service/*.task
+# ai-service/*.h5
+# ai-service/*.onnx

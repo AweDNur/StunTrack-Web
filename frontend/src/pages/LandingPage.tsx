@@ -21,7 +21,7 @@ const chartSeries = {
   stunting: {
     label: "Stunting",
     description: "Children under 5 with height-for-age below expected growth standards.",
-    color: "#d14f34",
+    color: "#1c5fbd",
     softColor: "#fff0ec",
     source: "SSGBI / SSGI / SKI public prevalence reports",
     values: [
@@ -35,7 +35,7 @@ const chartSeries = {
   nutrition: {
     label: "Lack of Nutrition",
     description: "Wasting or acute undernutrition prevalence among children under 5.",
-    color: "#168679",
+    color: "#3B75C8",
     softColor: "#eaf8f5",
     source: "SSGI / SKI public prevalence reports",
     values: [
@@ -49,7 +49,7 @@ const chartSeries = {
 } as const;
 
 const primaryActionClass =
-  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#ddcfc6] bg-white px-4 text-[1.05rem] font-extrabold leading-none text-[#970e00] shadow-[0_2px_0_#dccfc7] transition hover:text-[#c8301b]";
+  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#c7d9f5] bg-white px-4 text-[1.05rem] font-extrabold leading-none text-[#1c5fbd] shadow-[0_2px_0_#b8cdef] transition hover:text-[#164a96]";
 
 function Eyebrow({ children }: { children: string }) {
   return (
@@ -343,14 +343,13 @@ function LandingPage() {
               StunTrack
             </h1>
             <h2 className="mt-3.5 max-w-xl text-[clamp(1.45rem,2.6vw,2.35rem)] font-extrabold leading-[1.08] tracking-normal text-[#333d47]">
-              Track growth signals before small concerns become serious
+              Pahami gizi anak, ukur tumbuh kembangnya.
             </h2>
             <p className="mt-3.5 max-w-xl text-[1.08rem] leading-normal text-[#263744]">
-              A modern front door for families, volunteers, and admins to understand stunting
-              risk, prepare nutrition records, and support future AI-assisted baby photo checks.
+              Portal modern bagi keluarga, relawan, dan admin untuk memahami risiko stunting, menyiapkan catatan gizi, serta mendukung pemeriksaan foto bayi berbantuan AI di masa mendatang.
             </p>
 
-            <nav className="mt-6 flex flex-wrap gap-x-[34px] gap-y-3.5" aria-label="Primary">
+            <nav className="mt-6 flex flex-wrap gap-x-[34px] gap-y-3.5 " aria-label="Primary">
               <Link className={primaryActionClass} to="/login">
                 <LogIn size={21} />
                 Sign In

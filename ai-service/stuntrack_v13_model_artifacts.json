@@ -1,0 +1,52 @@
+{
+  "experiment_name": "StunTrack v13 — Final Model Export",
+  "scenario": "B3 Late Fusion + BorderlineSMOTE + Logistic Regression",
+  "start_time": "2026-10-14T03:53:39.939453+00:00",
+  "end_time": "2026-10-14T04:06:59.927871+00:00",
+  "duration_seconds": 799.988418,
+  "n_total_samples": 346,
+  "n_after_smote": 382,
+  "mp_detection_rate": 0.8930635838150289,
+  "height_calibration": {
+    "alpha": 31.30445232109653,
+    "beta": 0.36174557546628067,
+    "fitted": true
+  },
+  "tabular_features": [
+    "usia_bulan",
+    "jk",
+    "bb_kg",
+    "lk_cm",
+    "ll_cm"
+  ],
+  "mp_feature_dim": 70,
+  "meta_feature_dim": 24,
+  "base_models": [
+    "SVM_RBF",
+    "DecisionTree",
+    "RandomForest",
+    "GradientBoosting",
+    "LogisticRegression",
+    "MLP"
+  ],
+  "meta_learner": "LogisticRegression",
+  "meta_learner_params": {
+    "C": 0.5,
+    "max_iter": 3000,
+    "solver": "lbfgs",
+    "class_weight": "balanced"
+  },
+  "smote": {
+    "method": "BorderlineSMOTE",
+    "applied_on": "meta-features (24d)",
+    "k_neighbors": 5
+  },
+  "saved_model_path": "c:\\Users\\Michael Angello\\Documents\\Michael\\Dalam Nama Tuhan Yesus SCOPUS\\Stuntrack\\2\\Stuntrack Final\\2 kelas\\stuntrack_v13_b3_lr_model.joblib",
+  "environment": {
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "sklearn_version": "1.6.1",
+    "imblearn_version": "0.14.1",
+    "mediapipe": "mediapipe"
+  }
+}

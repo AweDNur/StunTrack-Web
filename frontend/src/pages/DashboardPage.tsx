@@ -1,5 +1,7 @@
-import { Activity, Baby, ClipboardList, HeartPulse, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Activity, Baby, ClipboardList, HeartPulse, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+
+import logo from "../assets/logo-stuntrack.png";
 
 type Role = "user" | "volunteer";
 
@@ -8,6 +10,7 @@ const sidebarItems = {
     { label: "Overview", icon: LayoutDashboard },
     { label: "Child Growth", icon: Baby },
     { label: "Health Records", icon: HeartPulse },
+    { label: "Detection", icon: Sparkles },
   ],
   volunteer: [
     { label: "Overview", icon: LayoutDashboard },
@@ -35,9 +38,9 @@ function DashboardPage() {
   return (
     <main className="flex min-h-screen bg-[#f5f8fc] text-[#24313a]">
       <aside className="flex w-[250px] shrink-0 flex-col bg-[#1c5fbd] px-5 py-6 text-white max-md:w-[84px] max-md:px-3">
-        <div className="flex items-center gap-3 border-b border-white/15 px-2 pb-6 max-md:justify-center"><div className="grid h-10 w-10 place-items-center rounded-xl bg-white text-lg font-black text-[#1c5fbd]">S</div><span className="text-xl font-black max-md:hidden">StunTrack</span></div>
+        <div className="flex items-center gap-3 border-b border-white/15 px-2 pb-6 max-md:justify-center"><img className="h-10 w-10 rounded-xl bg-white object-contain p-1" src={logo} alt="" /><span className="text-xl font-black max-md:hidden">StunTrack</span></div>
         <nav className="mt-8 flex flex-1 flex-col gap-2" aria-label="Dashboard navigation">
-          {items.map(({ label, icon: Icon }, index) => <button className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${index === 0 ? "bg-white text-[#1c5fbd] shadow-sm" : "text-blue-100 hover:bg-white/10 hover:text-white"}`} key={label} type="button"><Icon size={19} /><span className="max-md:hidden">{label}</span></button>)}
+          {items.map(({ label, icon: Icon }, index) => label === "Detection" ? <Link className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white max-md:justify-center" key={label} to="/dashboard/user/detection"><Icon size={19} /><span className="max-md:hidden">{label}</span></Link> : <button className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${index === 0 ? "bg-white text-[#1c5fbd] shadow-sm" : "text-blue-100 hover:bg-white/10 hover:text-white"}`} key={label} type="button"><Icon size={19} /><span className="max-md:hidden">{label}</span></button>)}
         </nav>
         <div className="border-t border-white/15 pt-4"><button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white max-md:justify-center" type="button" onClick={handleLogout}><LogOut size={19} /><span className="max-md:hidden">Sign out</span></button></div>
       </aside>

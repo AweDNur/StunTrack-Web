@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StunTrack — Deteksi Stunting AI</title>
+  <meta name="description" content="Prediksi stunting anak menggunakan AI — masukkan data klinis dan foto anak." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- ══ TOPBAR ══════════════════════════════════════════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="13" cy="5.5" r="3.5" fill="white"/>
+          <line x1="13" y1="9"  x2="13" y2="17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="13" y1="14" x2="8.5" y2="18" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="13" y1="14" x2="17.5" y2="18" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="13" y1="17" x2="10" y2="22" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+          <line x1="13" y1="17" x2="16" y2="22" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="brand-name">StunTrack</span>
+    </div>
+    <div class="status-pill" id="statusPill">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Menghubungkan…</span>
+    </div>
+  </header>
+
+  <!-- ══ ALERT ════════════════════════════════════════════════ -->
+  <div class="alert-bar" id="alertBar" style="display:none;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span id="alertText"></span>
+  </div>
+
+  <!-- ══ LAYOUT ════════════════════════════════════════════════ -->
+  <main class="layout">
+
+    <!-- ── INPUT PANEL ──────────────────────────────────────── -->
+    <div class="card card-input">
+      <div class="card-head">
+        <div class="card-head-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <h1 class="card-title">Data Anak</h1>
+          <p class="card-sub">Isi seluruh data klinis di bawah ini</p>
+        </div>
+      </div>
+
+      <form id="predictForm" novalidate>
+
+        <!-- Usia -->
+        <div class="field">
+          <label class="lbl" for="usia_bulan">Usia <span class="req">*</span></label>
+          <div class="inp-wrap" id="wrap_usia_bulan">
+            <input class="inp" type="number" id="usia_bulan" name="usia_bulan"
+              placeholder="0 – 60" min="0" max="60" step="0.1" required />
+            <span class="unit">bulan</span>
+          </div>
+          <span class="err-msg" id="err_usia_bulan"></span>
+        </div>
+
+        <!-- Jenis Kelamin -->
+        <div class="field">
+          <label class="lbl">Jenis Kelamin <span class="req">*</span></label>
+          <div class="radio-row">
+            <label class="radio-card" id="rc-p">
+              <input type="radio" name="jk" value="0" id="jk_p" />
+              <span class="rc-inner">
+                <span class="rc-ico">♀</span>
+                <span class="rc-txt">Perempuan</span>
+              </span>
+            </label>
+            <label class="radio-card" id="rc-l">
+              <input type="radio" name="jk" value="1" id="jk_l" />
+              <span class="rc-inner">
+                <span class="rc-ico">♂</span>
+                <span class="rc-txt">Laki-laki</span>
+              </span>
+            </label>
+          </div>
+          <span class="err-msg" id="err_jk"></span>
+        </div>
+
+        <!-- BB & LK -->
+        <div class="field-row">
+          <div class="field">
+            <label class="lbl" for="bb_kg">Berat Badan <span class="req">*</span></label>
+            <div class="inp-wrap" id="wrap_bb_kg">
+              <input class="inp" type="number" id="bb_kg" name="bb_kg"
+                placeholder="cth. 12.5" min="0.1" max="30" step="0.01" required />
+              <span class="unit">kg</span>
+            </div>
+            <span class="err-msg" id="err_bb_kg"></span>
+          </div>
+          <div class="field">
+            <label class="lbl" for="lk_cm">Lingkar Kepala <span class="req">*</span></label>
+            <div class="inp-wrap" id="wrap_lk_cm">
+              <input class="inp" type="number" id="lk_cm" name="lk_cm"
+                placeholder="cth. 46" min="5" max="70" step="0.1" required />
+              <span class="unit">cm</span>
+            </div>
+            <span class="err-msg" id="err_lk_cm"></span>
+          </div>
+        </div>
+
+        <!-- LL -->
+        <div class="field">
+          <label class="lbl" for="ll_cm">
+            Lingkar Lengan Atas
+            <span class="lbl-hint">(LILA)</span>
+            <span class="req">*</span>
+          </label>
+          <div class="inp-wrap" id="wrap_ll_cm">
+            <input class="inp" type="number" id="ll_cm" name="ll_cm"
+              placeholder="cth. 14" min="3" max="40" step="0.1" required />
+            <span class="unit">cm</span>
+          </div>
+          <span class="err-msg" id="err_ll_cm"></span>
+        </div>
+
+        <!-- Foto -->
+        <div class="field">
+          <label class="lbl">
+            Foto Anak
+            <span class="badge-opt">opsional · meningkatkan akurasi</span>
+          </label>
+          <div class="dropzone" id="uploadZone">
+            <input type="file" id="imageInput" name="image" accept="image/*" class="dropzone-input" />
+            <div class="dz-idle" id="uploadIdle">
+              <div class="dz-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <span class="dz-title">Klik atau seret foto ke sini</span>
+              <span class="dz-sub">PNG · JPG · HEIC · WebP · BMP · TIFF · dan lainnya</span>
+            </div>
+            <div class="dz-done" id="uploadDone" style="display:none;">
+              <img id="previewImg" src="" alt="Preview" class="dz-preview" />
+              <div class="dz-info">
+                <span id="previewName" class="dz-filename"></span>
+                <button type="button" id="removeImg" class="dz-remove" aria-label="Hapus">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tombol -->
+        <button type="submit" class="btn-primary" id="btnSubmit">
+          <span id="btnLabel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Prediksi Sekarang
+          </span>
+          <span id="btnLoading" style="display:none;">
+            <span class="spin"></span>
+            Menganalisis…
+          </span>
+        </button>
+
+      </form>
+    </div>
+
+    <!-- ── RESULT PANEL ──────────────────────────────────────── -->
+    <div class="card card-result" id="panelResult">
+
+      <!-- Idle -->
+      <div id="stateIdle" class="r-state r-idle">
+        <div class="idle-body">
+          <div class="idle-circle">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="idle-title">Hasil Prediksi</h2>
+          <p class="idle-desc">Isi data klinis anak di sebelah kiri lalu tekan <strong>Prediksi Sekarang</strong> untuk melihat hasilnya.</p>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div id="stateOutput" class="r-state" style="display:none;">
+
+        <div class="verdict-box" id="verdictBox">
+          <div class="v-emoji" id="verdictEmoji"></div>
+          <div class="v-label" id="verdictLabel"></div>
+          <div class="v-desc"  id="verdictDesc"></div>
+        </div>
+
+        <div class="disclaimer-box">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Hasil ini bersifat <strong>pendukung keputusan klinis</strong> dan bukan pengganti diagnosis dokter atau tenaga kesehatan.
+        </div>
+
+        <button type="button" class="btn-secondary" id="btnReset">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Prediksi Ulang
+        </button>
+
+      </div>
+
+      <!-- Error -->
+      <div id="stateError" class="r-state r-error" style="display:none;">
+        <div class="error-body">
+          <div class="error-circle">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </div>
+          <p class="error-title">Terjadi Kesalahan</p>
+          <p class="error-msg" id="errMsg"></p>
+          <button type="button" class="btn-secondary" id="btnResetErr">Coba Lagi</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
