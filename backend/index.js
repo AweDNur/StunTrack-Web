@@ -142,6 +142,20 @@ app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), uploa
     }
 });
 
+// Volunteer - Melihat history data training yang dia upload sendiri
+app.get('/api/volunteer/training/history', verifyToken, checkRole(['volunteer']), async (req, res) => {
+    try {
+        // req.user.id didapat otomatis dari token jwt saat volunteer login
+        const [data] = await db.query(
+            'SELECT * FROM training_data WHERE volunteer_id = ? ORDER BY created_at DESC',
+            [req.user.id] 
+        );
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, res) => {
     try {
         const [data] = await db.query('SELECT * FROM training_data ORDER BY created_at DESC');
