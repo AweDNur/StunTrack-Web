@@ -8,6 +8,8 @@ import TrainingDataPage from "./pages/TrainingDataPage";
 import AdminTrainingDataPage from "./pages/AdminTrainingDataPage";
 import AdminCMSPage from "./pages/AdminCMSPage";
 import VolunteerHistoryPage from "./pages/VolunteerHistoryPage";
+import OverviewPage from "./pages/OverviewPage";
+import ChildGrowthPage from "./pages/ChildGrowthPage";
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         
         <Route path="/dashboard/:role" element={<DashboardPage />}>
+          <Route path="overview" element={<OverviewPage />} />
+          <Route path="growth" element={<ChildGrowthPage />} />
           <Route path="detection" element={<DetectionPage />} />
           <Route path="training" element={<TrainingDataPage />} />
           <Route path="history" element={<VolunteerHistoryPage />} />

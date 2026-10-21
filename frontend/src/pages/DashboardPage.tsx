@@ -1,5 +1,5 @@
 // Tambahkan FileText (untuk CMS) dan Image (untuk Training Data) ke import lucide-react
-import { Activity, Baby, ClipboardList, HeartPulse, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon } from "lucide-react";
+import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon } from "lucide-react";
 import { Link, Navigate, useNavigate, useParams, Outlet, useLocation } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
@@ -10,9 +10,8 @@ type Role = "user" | "volunteer" | "admin";
 // 2. Tambahkan daftar menu untuk admin
 const sidebarItems = {
   user: [
-    { label: "Overview", icon: LayoutDashboard, path: "" },
-    { label: "Child Growth", icon: Baby, path: "" },
-    { label: "Health Records", icon: HeartPulse, path: "" },
+    { label: "Overview", icon: LayoutDashboard, path: "overview" },
+    { label: "Child Growth", icon: Baby, path: "growth" },
     { label: "Detection", icon: Sparkles, path: "detection" },
   ],
   volunteer: [
@@ -45,8 +44,6 @@ function DashboardPage() {
   const items = sidebarItems[role];
 
   // (Kode sisanya di dalam DashboardPage.tsx tetap sama seperti sebelumnya, tidak ada yang perlu diubah)
-  const isOverview = location.pathname === `/dashboard/${role}`;
-
   function handleLogout() {
     localStorage.removeItem("stuntrack_session");
     navigate("/login");
@@ -79,7 +76,7 @@ function DashboardPage() {
                 key={label}
                 type="button"
                 className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${
-                  index === 0 && isOverview ? "bg-white text-[#1c5fbd] shadow-sm" : "text-blue-100 hover:bg-white/10 hover:text-white"
+                  index === 0 && location.pathname === `/dashboard/${role}` ? "bg-white text-[#1c5fbd] shadow-sm" : "text-blue-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Icon size={19} />
@@ -115,16 +112,7 @@ function DashboardPage() {
         </header>
         
         <div className="flex-1 overflow-y-auto p-6 sm:p-10">
-          {isOverview ? (
-            <div className="grid h-full place-items-center">
-              <div className="text-center text-[#8a9aa6]">
-                <Activity className="mx-auto mb-3 text-[#1c5fbd]/40" size={28} />
-                <p className="font-bold">Dashboard Overview coming soon</p>
-              </div>
-            </div>
-          ) : (
-            <Outlet /> 
-          )}
+          <Outlet />
         </div>
       </section>
     </main>

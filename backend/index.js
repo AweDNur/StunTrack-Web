@@ -77,14 +77,38 @@ app.post('/api/admin/contents', verifyToken, checkRole(['admin']), upload.single
 // ==========================================
 // 3. USER: Profil Bayi & Scan AI (Graph Tracking)
 // ==========================================
+app.get('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) => {
+    try {
+        const [babies] = await db.query(
+            'SELECT id, name, gender, birth_date FROM babies WHERE user_id = ? ORDER BY name ASC',
+            [req.user.id]
+        );
+        res.json(babies);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) => {
     const { name, gender, birth_date } = req.body;
     try {
-        await db.query(
+        const [existingBabies] = await db.query(
+            'SELECT id FROM babies WHERE user_id = ? AND name = ? AND birth_date = ? LIMIT 1',
+            [req.user.id, name, birth_date]
+        );
+
+        if (existingBabies.length > 0) {
+            return res.status(200).json({
+                message: 'Profil bayi sudah tersedia',
+                baby_id: existingBabies[0].id,
+            });
+        }
+
+        const [result] = await db.query(
             'INSERT INTO babies (user_id, name, gender, birth_date) VALUES (?, ?, ?, ?)',
             [req.user.id, name, gender, birth_date]
         );
-        res.status(201).json({ message: 'Profil bayi berhasil dibuat' });
+        res.status(201).json({ message: 'Profil bayi berhasil dibuat', baby_id: result.insertId });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -94,10 +118,13 @@ app.post('/api/user/scans', verifyToken, checkRole(['user']), upload.single('pho
     const { baby_id, age_months, weight_kg, head_circ_cm, arm_circ_cm } = req.body;
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
     
-    // MOCKUP AI: Nanti ini dihubungkan dengan API AI Python Anda
-    let ai_result = 'Normal'; 
-    if (weight_kg < 5.0 && age_months > 6) ai_result = 'Kurang Nutrisi';
-    if (arm_circ_cm < 11.5) ai_result = 'Stunting';
+    // Hasil AI dikirim oleh frontend setelah inference berhasil.
+    // Fallback ini menjaga kompatibilitas dengan request lama.
+    let ai_result = req.body.ai_result || 'Normal';
+    if (!req.body.ai_result) {
+        if (weight_kg < 5.0 && age_months > 6) ai_result = 'Kurang Nutrisi';
+        if (arm_circ_cm < 11.5) ai_result = 'Stunting';
+    }
 
     try {
         await db.query(
@@ -113,8 +140,13 @@ app.post('/api/user/scans', verifyToken, checkRole(['user']), upload.single('pho
 app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['user']), async (req, res) => {
     try {
         const [scans] = await db.query(
-            'SELECT age_months, weight_kg, head_circ_cm, arm_circ_cm, ai_result, created_at FROM scans WHERE baby_id = ? ORDER BY age_months ASC',
-            [req.params.baby_id]
+            `SELECT s.age_months, s.weight_kg, s.head_circ_cm, s.arm_circ_cm,
+                    s.ai_result, s.created_at
+             FROM scans s
+             INNER JOIN babies b ON b.id = s.baby_id
+             WHERE s.baby_id = ? AND b.user_id = ?
+             ORDER BY s.age_months ASC, s.created_at ASC`,
+            [req.params.baby_id, req.user.id]
         );
         res.json(scans); 
     } catch (err) {
