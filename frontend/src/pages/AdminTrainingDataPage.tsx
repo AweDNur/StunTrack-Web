@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, AlertCircle, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, AlertCircle, X, ChevronLeft, ChevronRight, Grid2X2, List } from "lucide-react";
 
 interface TrainingData {
   id: number;
@@ -14,6 +14,7 @@ export default function AdminTrainingDataPage() {
   const [data, setData] = useState<TrainingData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   // State untuk Lightbox/Gallery
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
@@ -109,9 +110,7 @@ export default function AdminTrainingDataPage() {
             Kumpulan dataset foto yang diunggah oleh relawan untuk meningkatkan akurasi AI.
           </p>
         </div>
-        <div className="text-sm font-bold text-[#1c5fbd] bg-white border border-[#e3eaf2] px-4 py-2 rounded-lg shadow-sm">
-          Total Data: {data.length}
-        </div>
+        <div className="flex items-center gap-3"><div className="text-sm font-bold text-[#1c5fbd] bg-white border border-[#e3eaf2] px-4 py-2 rounded-lg shadow-sm">Total Data: {data.length}</div><button type="button" onClick={() => setViewMode((mode) => mode === "grid" ? "list" : "grid")} className="grid h-10 w-10 place-items-center rounded-lg border border-[#e3eaf2] bg-white text-[#53626b] shadow-sm transition hover:border-[#1c5fbd] hover:text-[#1c5fbd]" aria-label={viewMode === "grid" ? "Tampilkan sebagai list" : "Tampilkan sebagai grid"} title={viewMode === "grid" ? "Tampilkan sebagai list" : "Tampilkan sebagai grid"}>{viewMode === "grid" ? <List size={19} /> : <Grid2X2 size={19} />}</button></div>
       </div>
 
       {data.length === 0 ? (
@@ -119,14 +118,14 @@ export default function AdminTrainingDataPage() {
           <p className="font-bold">Belum ada data training yang diunggah.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={viewMode === "grid" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid grid-cols-1 gap-3"}>
           {data.map((item, index) => (
             <div 
               key={item.id} 
-              className="overflow-hidden rounded-2xl border border-[#e3eaf2] bg-white shadow-sm transition hover:shadow-md cursor-pointer group"
+              className={viewMode === "grid" ? "overflow-hidden rounded-2xl border border-[#e3eaf2] bg-white shadow-sm transition hover:shadow-md cursor-pointer group" : "flex overflow-hidden rounded-xl border border-[#e3eaf2] bg-white shadow-sm transition hover:shadow-md cursor-pointer group"}
               onClick={() => setSelectedImageIndex(index)}
             >
-              <div className="aspect-square w-full bg-gray-100 relative overflow-hidden">
+              <div className={viewMode === "grid" ? "aspect-square w-full bg-gray-100 relative overflow-hidden" : "relative h-28 w-28 shrink-0 overflow-hidden bg-gray-100 sm:h-32 sm:w-32"}>
                 <img
                   src={`http://localhost:3000${item.photo_url}`}
                   alt={`Label: ${item.manual_label}`}
@@ -135,11 +134,11 @@ export default function AdminTrainingDataPage() {
                 {/* Overlay saat di-hover (opsional agar lebih interaktif) */}
                 <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/10" />
                 
-                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-black text-[#303b45] shadow-sm uppercase tracking-wide">
+                <div className={`${viewMode === "grid" ? "absolute top-3 right-3" : "hidden"} bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-black text-[#303b45] shadow-sm uppercase tracking-wide`}>
                   {item.manual_label}
                 </div>
               </div>
-              <div className="p-4">
+<div className={viewMode === "list" ? "flex w-44 shrink-0 items-center border-x border-[#edf1f5] px-5" : "hidden"}><span className="rounded-md bg-[#eaf2ff] px-3 py-1 text-xs font-black uppercase tracking-wide text-[#1c5fbd]">{item.manual_label}</span></div>              <div className="min-w-0 flex-1 p-4">
                 <p className="text-xs font-semibold text-[#8a9aa6] mb-1">
                   {new Date(item.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
                 </p>

@@ -14,6 +14,13 @@ type Prediction = {
 
 const inputClass = "h-12 w-full rounded-lg border border-[#cbd8df] bg-white px-4 font-medium text-[#24313a] outline-none transition placeholder:text-[#9aa8af] focus:border-[#1c5fbd] focus:ring-4 focus:ring-[#1c5fbd]/10";
 
+function todayInputValue() {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+}
+
 function DetectionPage() {
   const session = JSON.parse(localStorage.getItem("stuntrack_session") || "null") as Session | null;
   const formRef = useRef<HTMLFormElement>(null);
@@ -30,6 +37,7 @@ function DetectionPage() {
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const today = todayInputValue();
 
   useEffect(() => {
     fetch("/ai-api/status")
@@ -87,6 +95,12 @@ function DetectionPage() {
     setPrediction(null);
     setIsSubmitting(true);
     const form = new FormData(event.currentTarget);
+    const submittedBirthDate = String(form.get("birth_date") ?? "");
+    if (submittedBirthDate > today) {
+      setError("Tanggal lahir tidak boleh lebih dari hari ini.");
+      setIsSubmitting(false);
+      return;
+    }
     if (image) form.set("image", image);
     else form.delete("image");
 
@@ -171,7 +185,7 @@ function DetectionPage() {
             <form ref={formRef} className="grid gap-5" onSubmit={handleSubmit}>
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="baby_select">Pilih Bayi<select className={inputClass} id="baby_select" value={selectedBabyId} onChange={(event) => handleBabySelection(event.target.value)}><option value="">Bayi baru / tulis manual</option>{babies.map((baby) => <option value={baby.id} key={baby.id}>{baby.name}</option>)}</select></label>
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="baby_name">Nama Bayi<input className={inputClass} id="baby_name" name="baby_name" type="text" placeholder="Nama lengkap bayi" value={babyName} onChange={(event) => { setBabyName(event.target.value); if (selectedBabyId) setSelectedBabyId(""); }} required /></label>
-              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="birth_date">Tanggal Lahir<input className={inputClass} id="birth_date" name="birth_date" type="date" value={birthDate} onChange={(event) => { setBirthDate(event.target.value); if (selectedBabyId) setSelectedBabyId(""); }} required /></label>
+              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="birth_date">Tanggal Lahir<input className={inputClass} id="birth_date" name="birth_date" type="date" max={today} value={birthDate} onChange={(event) => { setBirthDate(event.target.value); if (selectedBabyId) setSelectedBabyId(""); }} required /></label>
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="usia_bulan">Usia <span className="font-normal text-[#8a9aa6]">(bulan)</span><input className={inputClass} id="usia_bulan" name="usia_bulan" type="number" placeholder="cth. 24" min="0" max="60" step="0.1" required /></label>
               <fieldset className="grid gap-2"><legend className="text-sm font-extrabold text-[#405155]">Jenis Kelamin</legend><div className="grid gap-3 sm:grid-cols-2"><label className="cursor-pointer"><input className="peer sr-only" type="radio" name="jk" value="0" checked={gender === "0"} onChange={(event) => setGender(event.target.value)} required /><span className="flex h-12 items-center justify-center rounded-lg border border-[#cbd8df] font-bold text-[#65747b] transition peer-checked:border-[#1c5fbd] peer-checked:bg-[#eef5ff] peer-checked:text-[#1c5fbd]">♀ Perempuan</span></label><label className="cursor-pointer"><input className="peer sr-only" type="radio" name="jk" value="1" checked={gender === "1"} onChange={(event) => setGender(event.target.value)} /><span className="flex h-12 items-center justify-center rounded-lg border border-[#cbd8df] font-bold text-[#65747b] transition peer-checked:border-[#1c5fbd] peer-checked:bg-[#eef5ff] peer-checked:text-[#1c5fbd]">♂ Laki-laki</span></label></div></fieldset>
               <div className="grid gap-5 sm:grid-cols-2"><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="bb_kg">Berat Badan <span className="font-normal text-[#8a9aa6]">(kg)</span><input className={inputClass} id="bb_kg" name="bb_kg" type="number" placeholder="cth. 12.5" min="0.1" max="30" step="0.01" required /></label><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="lk_cm">Lingkar Kepala <span className="font-normal text-[#8a9aa6]">(cm)</span><input className={inputClass} id="lk_cm" name="lk_cm" type="number" placeholder="cth. 46" min="5" max="70" step="0.1" required /></label></div>
