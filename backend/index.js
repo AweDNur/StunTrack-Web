@@ -158,17 +158,55 @@ app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['user']), asy
 // 4. VOLUNTEER & ADMIN: Training Data AI
 // ==========================================
 app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), upload.single('photo'), async (req, res) => {
-    const { manual_label, notes } = req.body;
+    // Tambahkan gender di req.body
+    const { gender, manual_label, notes } = req.body;
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!photo_url) return res.status(400).json({ message: 'Foto wajib diunggah untuk keperluan training' });
 
     try {
         await db.query(
-            'INSERT INTO training_data (volunteer_id, photo_url, manual_label, notes) VALUES (?, ?, ?, ?)',
-            [req.user.id, photo_url, manual_label, notes]
+            // Tambahkan gender ke query INSERT
+            'INSERT INTO training_data (volunteer_id, gender, photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?)',
+            [req.user.id, gender, photo_url, manual_label, notes]
         );
         res.status(201).json({ message: 'Data training berhasil disubmit' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ==========================================
+// 5. ABOUT WEB (CMS)
+// ==========================================
+
+// Guest / Public - Melihat isi halaman About
+app.get('/api/about', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT content, updated_at FROM about_web WHERE id = 1');
+        if (rows.length === 0) {
+            return res.json({ content: 'Belum ada informasi about.' });
+        }
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin - Memperbarui konten halaman About
+app.put('/api/admin/about', verifyToken, checkRole(['admin']), async (req, res) => {
+    const { content } = req.body;
+    
+    if (!content) return res.status(400).json({ message: 'Konten tidak boleh kosong' });
+
+    try {
+        // Menggunakan teknik "INSERT ON DUPLICATE KEY UPDATE"
+        // Artinya: Jika id=1 belum ada, buat baru. Jika sudah ada, cukup update kontennya.
+        await db.query(
+            'INSERT INTO about_web (id, content) VALUES (1, ?) ON DUPLICATE KEY UPDATE content = ?',
+            [content, content]
+        );
+        res.json({ message: 'Konten About Web berhasil diperbarui!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

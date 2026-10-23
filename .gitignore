@@ -25,3 +25,7 @@ ai-service/uploads/*
 # ai-service/*.task
 # ai-service/*.h5
 # ai-service/*.onnx
+
+# Backend uploaded files
+backend/uploads/*
+!backend/uploads/.gitkeep

@@ -4,6 +4,7 @@ import { Upload, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-re
 export default function TrainingDataPage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [gender, setGender] = useState<string>("L"); // State baru untuk gender
   const [manualLabel, setManualLabel] = useState<string>("Stunting");
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -27,6 +28,7 @@ export default function TrainingDataPage() {
     const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
     const formData = new FormData();
     formData.append("photo", photo);
+    formData.append("gender", gender); // Append gender ke form data
     formData.append("manual_label", manualLabel);
     formData.append("notes", notes);
 
@@ -91,14 +93,25 @@ export default function TrainingDataPage() {
             </div>
           </div>
 
-          {/* LABEL */}
-          <div>
-            <label className="mb-2 block text-sm font-bold text-[#303b45]">Label Diagnosis Manual *</label>
-            <select value={manualLabel} onChange={(e) => setManualLabel(e.target.value)} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none">
-              <option value="Stunting">Stunting</option>
-              <option value="Kurang Nutrisi">Kurang Nutrisi</option>
-              <option value="Normal">Normal</option>
-            </select>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {/* GENDER */}
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[#303b45]">Jenis Kelamin *</label>
+              <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none">
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>
+              </select>
+            </div>
+
+            {/* LABEL */}
+            <div>
+              <label className="mb-2 block text-sm font-bold text-[#303b45]">Label Diagnosis *</label>
+              <select value={manualLabel} onChange={(e) => setManualLabel(e.target.value)} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none">
+                <option value="Stunting">Stunting</option>
+                <option value="Kurang Nutrisi">Kurang Nutrisi</option>
+                <option value="Normal">Normal</option>
+              </select>
+            </div>
           </div>
 
           {/* CATATAN */}

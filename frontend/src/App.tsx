@@ -10,12 +10,14 @@ import AdminCMSPage from "./pages/AdminCMSPage";
 import VolunteerHistoryPage from "./pages/VolunteerHistoryPage";
 import OverviewPage from "./pages/OverviewPage";
 import ChildGrowthPage from "./pages/ChildGrowthPage";
+import AboutPage from "./pages/AboutPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         

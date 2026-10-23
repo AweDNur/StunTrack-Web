@@ -107,8 +107,8 @@ function GrowthChart() {
               <button
                 aria-pressed={isActive}
                 className={`min-h-[42px] cursor-pointer rounded-lg border px-4 font-black shadow-[0_2px_0_#d0d8d6] transition ${isActive
-                    ? "border-[var(--series)] bg-[var(--series)] text-white shadow-[0_2px_0_#d0d8d6]"
-                    : "border-[#bdcac8] bg-white text-[#405155] hover:border-[var(--series)]"
+                  ? "border-[var(--series)] bg-[var(--series)] text-white shadow-[0_2px_0_#d0d8d6]"
+                  : "border-[#bdcac8] bg-white text-[#405155] hover:border-[var(--series)]"
                   }`}
                 key={key}
                 onClick={() => setMetric(key)}
@@ -226,19 +226,19 @@ function HeroVisual() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
-  {
-    image: babyImage,
-    alt: "Bayi sehat",
-  },
-  {
-    image: nutritionImage,
-    alt: "Makanan bergizi untuk bayi",
-  },
-  {
-    image: growthImage,
-    alt: "Pemantauan pertumbuhan bayi",
-  },
-];
+    {
+      image: babyImage,
+      alt: "Bayi sehat",
+    },
+    {
+      image: nutritionImage,
+      alt: "Makanan bergizi untuk bayi",
+    },
+    {
+      image: growthImage,
+      alt: "Pemantauan pertumbuhan bayi",
+    },
+  ];
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -299,11 +299,10 @@ function HeroVisual() {
             onClick={() => setCurrentSlide(index)}
             aria-label={`Show slide ${index + 1}`}
             aria-pressed={currentSlide === index}
-            className={`h-2.5 rounded-full border border-white/80 transition-all duration-300 ${
-              currentSlide === index
+            className={`h-2.5 rounded-full border border-white/80 transition-all duration-300 ${currentSlide === index
                 ? "w-7 bg-[#168679]"
                 : "w-2.5 bg-white/80 hover:bg-white"
-            }`}
+              }`}
           />
         ))}
       </div>
@@ -358,10 +357,10 @@ function LandingPage() {
                 <UserPlus size={21} />
                 Register
               </Link>
-              <a className={primaryActionClass} href="#about">
+              <Link className={primaryActionClass} to="/about">
                 <HeartPulse size={21} />
                 About
-              </a>
+              </Link>
             </nav>
           </div>
 
