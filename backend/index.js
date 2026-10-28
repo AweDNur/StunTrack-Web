@@ -228,8 +228,37 @@ app.get('/api/volunteer/training/history', verifyToken, checkRole(['volunteer'])
 
 app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, res) => {
     try {
-        const [data] = await db.query('SELECT * FROM training_data ORDER BY created_at DESC');
-        res.json(data);
+        const gender = typeof req.query.gender === 'string' ? req.query.gender : '';
+        const label = typeof req.query.label === 'string' ? req.query.label : '';
+        const requestedLimit = Number.parseInt(String(req.query.limit || '5'), 10);
+        const requestedOffset = Number.parseInt(String(req.query.offset || '0'), 10);
+        const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 5;
+        const offset = Number.isFinite(requestedOffset) ? Math.max(requestedOffset, 0) : 0;
+        const conditions = [];
+        const values = [];
+
+        if (gender) {
+            conditions.push('gender = ?');
+            values.push(gender);
+        }
+        if (label) {
+            conditions.push('manual_label = ?');
+            values.push(label);
+        }
+
+        const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+        const [data] = await db.query(
+            `SELECT * FROM training_data${whereClause} ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?`,
+            [...values, limit, offset]
+        );
+        const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data${whereClause}`, values);
+        const [categoryRows] = await db.query(
+            'SELECT gender, manual_label AS label, COUNT(*) AS count FROM training_data GROUP BY gender, manual_label'
+        );
+        const total = Number(countRow.total || 0);
+        const categories = Array.isArray(categoryRows) ? categoryRows : [];
+
+        res.json({ data, total, hasMore: offset + data.length < total, categories });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

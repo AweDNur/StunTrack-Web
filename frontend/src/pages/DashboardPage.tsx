@@ -1,5 +1,7 @@
+import { useState } from "react";
+
 // Tambahkan FileText (untuk CMS) dan Image (untuk Training Data) ke import lucide-react
-import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon } from "lucide-react";
+import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, Navigate, useNavigate, useParams, Outlet, useLocation } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
@@ -42,6 +44,7 @@ function DashboardPage() {
   if (role === "admin") roleLabel = "Admin";
   
   const items = sidebarItems[role];
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // (Kode sisanya di dalam DashboardPage.tsx tetap sama seperti sebelumnya, tidak ada yang perlu diubah)
   function handleLogout() {
@@ -52,10 +55,11 @@ function DashboardPage() {
   return (
     <main className="flex min-h-screen bg-[#f5f8fc] text-[#24313a]">
       {/* ... (isi aside dan header tetap sama) ... */}
-      <aside className="flex w-[250px] shrink-0 flex-col bg-[#1c5fbd] px-5 py-6 text-white max-md:w-[84px] max-md:px-3">
+      <aside className={`relative flex shrink-0 flex-col bg-[#1c5fbd] px-5 py-6 text-white transition-[width,padding] duration-300 max-md:w-[84px] max-md:px-3 ${isSidebarCollapsed ? "w-[84px] px-3" : "w-[250px]"}`}>
+        <button type="button" onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)} className="absolute -right-3 top-1/2 z-20 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-[#dce6ef] bg-white text-[#1c5fbd] shadow-md transition hover:bg-[#eaf2ff] max-md:hidden" aria-label={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"} title={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}>{isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button>
         <div className="flex items-center gap-3 border-b border-white/15 px-2 pb-6 max-md:justify-center">
           <img className="h-10 w-10 rounded-xl bg-white object-contain p-1" src={logo} alt="" />
-          <span className="text-xl font-black max-md:hidden">StunTrack</span>
+          <span className={`text-xl font-black max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>StunTrack</span>
         </div>
         
         <nav className="mt-8 flex flex-1 flex-col gap-2" aria-label="Dashboard navigation">
@@ -69,7 +73,7 @@ function DashboardPage() {
                 }`}
               >
                 <Icon size={19} />
-                <span className="max-md:hidden">{label}</span>
+                <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>{label}</span>
               </Link>
             ) : (
               <button
@@ -80,7 +84,7 @@ function DashboardPage() {
                 }`}
               >
                 <Icon size={19} />
-                <span className="max-md:hidden">{label}</span>
+                <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>{label}</span>
               </button>
             )
           ))}
@@ -89,7 +93,7 @@ function DashboardPage() {
         <div className="border-t border-white/15 pt-4">
           <button className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white max-md:justify-center" type="button" onClick={handleLogout}>
             <LogOut size={19} />
-            <span className="max-md:hidden">Sign out</span>
+            <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>Sign out</span>
           </button>
         </div>
       </aside>
