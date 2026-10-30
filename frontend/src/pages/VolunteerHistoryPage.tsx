@@ -3,6 +3,11 @@ import { Loader2, AlertCircle, ImageIcon, X, ChevronLeft, ChevronRight } from "l
 
 interface TrainingData {
   id: number;
+  gender: "L" | "P";
+  height_cm: number | null;
+  weight_kg: number | null;
+  head_circ_cm: number | null;
+  arm_circ_cm: number | null;
   photo_url: string;
   manual_label: string;
   notes: string;
@@ -147,6 +152,9 @@ export default function VolunteerHistoryPage() {
                 <p className="text-sm text-[#303b45] mt-1 line-clamp-2" title={item.notes}>
                   {item.notes || <span className="italic text-gray-400">Tanpa catatan</span>}
                 </p>
+                <p className="mt-2 text-[11px] font-semibold text-[#71838d]">
+                  {item.gender === "L" ? "Laki-laki" : "Perempuan"} · {item.height_cm ?? "–"} cm · {item.weight_kg ?? "–"} kg
+                </p>
               </div>
             </div>
           ))}
@@ -200,7 +208,29 @@ export default function VolunteerHistoryPage() {
               <p className="text-sm">
                 <span className="font-bold text-white/70">Catatan:</span> {data[selectedImageIndex].notes || "Tidak ada catatan."}
               </p>
-              <p className="mt-2 text-xs text-white/50">
+              <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-black/20 p-3 text-sm sm:grid-cols-4">
+                <div>
+                  <p className="text-xs text-white/50">Jenis kelamin</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].gender === "L" ? "Laki-laki" : "Perempuan"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Tinggi badan</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].height_cm ?? "–"} cm</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Berat badan</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].weight_kg ?? "–"} kg</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Lingkar kepala</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].head_circ_cm ?? "–"} cm</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">LiLA</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].arm_circ_cm ?? "–"} cm</p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-white/50">
                 Diunggah pada: {new Date(data[selectedImageIndex].created_at).toLocaleString('id-ID')}
               </p>
             </div>

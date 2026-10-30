@@ -59,6 +59,49 @@ app.get('/api/contents', async (req, res) => {
     }
 });
 
+// Guest - Melihat kategori dan contoh dataset label AI
+app.get('/api/labels', async (req, res) => {
+    try {
+        const gender = typeof req.query.gender === 'string' ? req.query.gender : '';
+        const label = typeof req.query.label === 'string' ? req.query.label : '';
+        const requestedLimit = Number.parseInt(String(req.query.limit || '5'), 10);
+        const requestedOffset = Number.parseInt(String(req.query.offset || '0'), 10);
+        const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 5;
+        const offset = Number.isFinite(requestedOffset) ? Math.max(requestedOffset, 0) : 0;
+        const conditions = [];
+        const values = [];
+
+        if (gender) {
+            conditions.push('td.gender = ?');
+            values.push(gender);
+        }
+        if (label) {
+            conditions.push('td.manual_label = ?');
+            values.push(label);
+        }
+
+        const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+        const [data] = await db.query(
+            `SELECT td.*, u.name AS volunteer_name FROM training_data td LEFT JOIN users u ON u.id = td.volunteer_id${whereClause} ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
+            [...values, limit, offset]
+        );
+        const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data td${whereClause}`, values);
+        const [categoryRows] = await db.query(
+            'SELECT gender, manual_label AS label, COUNT(*) AS count FROM training_data GROUP BY gender, manual_label'
+        );
+        const total = Number(countRow.total || 0);
+
+        res.json({
+            data,
+            total,
+            hasMore: offset + data.length < total,
+            categories: Array.isArray(categoryRows) ? categoryRows : [],
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Admin - Menambah konten edukasi (CMS)
 app.post('/api/admin/contents', verifyToken, checkRole(['admin']), upload.single('image'), async (req, res) => {
     const { title, body_text } = req.body;
@@ -159,7 +202,8 @@ app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['user']), asy
 // ==========================================
 app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), upload.single('photo'), async (req, res) => {
     // Tambahkan gender di req.body
-    const { gender, manual_label, notes } = req.body;
+    const { gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, manual_label, notes } = req.body;
+    const measurements = [height_cm, weight_kg, head_circ_cm, arm_circ_cm].map((value) => { if (value === undefined || value === null || String(value).trim() === '') return null; const number = Number(value); return Number.isFinite(number) && number >= 0 ? number : null; });
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     if (!photo_url) return res.status(400).json({ message: 'Foto wajib diunggah untuk keperluan training' });
@@ -167,8 +211,8 @@ app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), uploa
     try {
         await db.query(
             // Tambahkan gender ke query INSERT
-            'INSERT INTO training_data (volunteer_id, gender, photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?)',
-            [req.user.id, gender, photo_url, manual_label, notes]
+            'INSERT INTO training_data (volunteer_id, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, gender, ...measurements, photo_url, manual_label, notes]
         );
         res.status(201).json({ message: 'Data training berhasil disubmit' });
     } catch (err) {
@@ -238,20 +282,20 @@ app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, re
         const values = [];
 
         if (gender) {
-            conditions.push('gender = ?');
+            conditions.push('td.gender = ?');
             values.push(gender);
         }
         if (label) {
-            conditions.push('manual_label = ?');
+            conditions.push('td.manual_label = ?');
             values.push(label);
         }
 
         const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
         const [data] = await db.query(
-            `SELECT * FROM training_data${whereClause} ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?`,
+            `SELECT td.*, u.name AS volunteer_name FROM training_data td LEFT JOIN users u ON u.id = td.volunteer_id${whereClause} ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
             [...values, limit, offset]
         );
-        const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data${whereClause}`, values);
+        const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data td${whereClause}`, values);
         const [categoryRows] = await db.query(
             'SELECT gender, manual_label AS label, COUNT(*) AS count FROM training_data GROUP BY gender, manual_label'
         );

@@ -33,13 +33,21 @@ export default function AboutPage() {
           <div className="flex items-center gap-3">
             <img className="h-[40px] w-[40px] shrink-0 object-contain" src={logo} alt="StunTrack Logo" />
             <strong className="text-xl font-black text-[#1d61bc]">StunTrack</strong>
+            <Link
+              to="/labels"
+              className="ml-2 rounded-lg border border-[#b4ccef] bg-[#eaf2ff] px-5 py-2.5 text-base font-black text-[#1c5fbd] shadow-[0_3px_0_#9db9e8] transition hover:-translate-y-0.5 hover:bg-[#dceaff] hover:shadow-[0_4px_0_#8eafe4]"
+            >
+              Label
+            </Link>
           </div>
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]"
-          >
-            <ArrowLeft size={18} /> Kembali ke Beranda
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]"
+            >
+              <ArrowLeft size={18} /> Kembali ke Beranda
+            </Link>
+          </div>
         </nav>
 
         {/* Content Area */}

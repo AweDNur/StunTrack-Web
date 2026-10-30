@@ -11,6 +11,7 @@ import VolunteerHistoryPage from "./pages/VolunteerHistoryPage";
 import OverviewPage from "./pages/OverviewPage";
 import ChildGrowthPage from "./pages/ChildGrowthPage";
 import AboutPage from "./pages/AboutPage";
+import LabelPage from "./pages/LabelPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/labels" element={<LabelPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         

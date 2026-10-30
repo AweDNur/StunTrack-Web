@@ -5,6 +5,10 @@ export default function TrainingDataPage() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [gender, setGender] = useState<string>("L"); // State baru untuk gender
+  const [heightCm, setHeightCm] = useState<string>("");
+  const [weightKg, setWeightKg] = useState<string>("");
+  const [headCircCm, setHeadCircCm] = useState<string>("");
+  const [armCircCm, setArmCircCm] = useState<string>("");
   const [manualLabel, setManualLabel] = useState<string>("Stunting");
   const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -29,6 +33,10 @@ export default function TrainingDataPage() {
     const formData = new FormData();
     formData.append("photo", photo);
     formData.append("gender", gender); // Append gender ke form data
+    formData.append("height_cm", heightCm);
+    formData.append("weight_kg", weightKg);
+    formData.append("head_circ_cm", headCircCm);
+    formData.append("arm_circ_cm", armCircCm);
     formData.append("manual_label", manualLabel);
     formData.append("notes", notes);
 
@@ -44,6 +52,10 @@ export default function TrainingDataPage() {
       setMessage({ type: "success", text: "Data training berhasil dikirim untuk pelatihan AI!" });
       setPhoto(null);
       setPreview(null);
+      setHeightCm("");
+      setWeightKg("");
+      setHeadCircCm("");
+      setArmCircCm("");
       setNotes("");
     } catch (err: any) {
       setMessage({ type: "error", text: err.message || "Terjadi kesalahan server" });
@@ -114,6 +126,31 @@ export default function TrainingDataPage() {
             </div>
           </div>
 
+          {/* PENGUKURAN FISIK */}
+          <div>
+            <div className="mb-3">
+              <h3 className="text-sm font-bold text-[#303b45]">Pengukuran Fisik</h3>
+              <p className="mt-1 text-xs text-[#71838d]">Opsional. Masukkan angka dalam satuan cm dan kg.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="training-height" className="mb-2 block text-sm font-semibold text-[#50616b]">Tinggi badan (cm)</label>
+                <input id="training-height" type="number" min="0" step="0.01" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} placeholder="Contoh: 85.50" className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none" />
+              </div>
+              <div>
+                <label htmlFor="training-weight" className="mb-2 block text-sm font-semibold text-[#50616b]">Berat badan (kg)</label>
+                <input id="training-weight" type="number" min="0" step="0.01" value={weightKg} onChange={(e) => setWeightKg(e.target.value)} placeholder="Contoh: 12.30" className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none" />
+              </div>
+              <div>
+                <label htmlFor="training-head-circ" className="mb-2 block text-sm font-semibold text-[#50616b]">Lingkar kepala (cm)</label>
+                <input id="training-head-circ" type="number" min="0" step="0.01" value={headCircCm} onChange={(e) => setHeadCircCm(e.target.value)} placeholder="Contoh: 48.00" className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none" />
+              </div>
+              <div>
+                <label htmlFor="training-arm-circ" className="mb-2 block text-sm font-semibold text-[#50616b]">Lingkar lengan / LiLA (cm)</label>
+                <input id="training-arm-circ" type="number" min="0" step="0.01" value={armCircCm} onChange={(e) => setArmCircCm(e.target.value)} placeholder="Contoh: 14.50" className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none" />
+              </div>
+            </div>
+          </div>
           {/* CATATAN */}
           <div>
             <label className="mb-2 block text-sm font-bold text-[#303b45]">Catatan Tambahan (Opsional)</label>
