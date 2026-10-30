@@ -1,7 +1,7 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Activity, AlertCircle, Baby, CheckCircle2, ImagePlus, Info, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
 
-type Session = { token?: string; role?: "user" | "volunteer" | "admin"; name?: string };
+type Session = { token?: string; role?: "orang_tua" | "volunteer" | "admin"; name?: string };
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
 type Prediction = {
   prediction: string;

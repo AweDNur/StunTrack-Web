@@ -27,7 +27,7 @@ function LoginPage() {
       });
       const result = (await response.json().catch(() => ({}))) as {
         token?: string;
-        role?: "user" | "volunteer";
+        role?: "orang_tua" | "volunteer" | "admin";
         name?: string;
         message?: string;
         error?: string;

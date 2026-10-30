@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
 
-type Role = "user" | "volunteer";
+type Role = "orang_tua" | "volunteer";
 
 const roleOptions: Array<{
   value: Role;
@@ -20,13 +20,13 @@ const roleOptions: Array<{
   description: string;
   icon: typeof Users;
 }> = [
-  { value: "user", label: "User", description: "Pantau pertumbuhan dan kesehatan si kecil.", icon: Users },
+  { value: "orang_tua", label: "Orang Tua", description: "Pantau pertumbuhan dan kesehatan si kecil.", icon: Users },
   { value: "volunteer", label: "Volunteer", description: "Bantu keluarga dengan pengetahuan dan pendampingan.", icon: HeartHandshake },
 ];
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role>("user");
+  const [role, setRole] = useState<Role>("orang_tua");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -55,7 +55,7 @@ function RegisterPage() {
       if (!response.ok) throw new Error(result.message || result.error || "Pendaftaran belum berhasil. Coba lagi.");
       setSuccess(result.message || "Akun berhasil dibuat. Selamat datang di StunTrack!");
       formElement.reset();
-      setRole("user");
+      setRole("orang_tua");
     } catch (submitError) {
       setError(
         submitError instanceof TypeError

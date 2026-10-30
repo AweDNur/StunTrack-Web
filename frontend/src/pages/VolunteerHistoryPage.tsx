@@ -14,6 +14,12 @@ interface TrainingData {
   created_at: string;
 }
 
+function protectedImageUrl(photoPath: string) {
+  const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
+  const token = typeof session.token === "string" ? session.token : "";
+  return `http://localhost:3000${photoPath}?token=${encodeURIComponent(token)}`;
+}
+
 export default function VolunteerHistoryPage() {
   const [data, setData] = useState<TrainingData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,7 +138,7 @@ export default function VolunteerHistoryPage() {
             >
               <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100 relative">
                 <img
-                  src={`http://localhost:3000${item.photo_url}`}
+                  src={protectedImageUrl(item.photo_url)}
                   alt="Kontribusi"
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                 />
@@ -187,7 +193,7 @@ export default function VolunteerHistoryPage() {
           {/* Konten Gambar */}
           <div className="relative flex max-h-full w-full max-w-5xl flex-col items-center" onClick={(e) => e.stopPropagation()}>
             <img
-              src={`http://localhost:3000${data[selectedImageIndex].photo_url}`}
+              src={protectedImageUrl(data[selectedImageIndex].photo_url)}
               alt={`Kontribusi ${selectedImageIndex}`}
               className="max-h-[80vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
             />

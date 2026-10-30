@@ -7,11 +7,11 @@ import { Link, Navigate, useNavigate, useParams, Outlet, useLocation } from "rea
 import logo from "../assets/logo-stuntrack.png";
 
 // 1. Tambahkan "admin" ke type Role
-type Role = "user" | "volunteer" | "admin";
+type Role = "orang_tua" | "volunteer" | "admin";
 
 // 2. Tambahkan daftar menu untuk admin
 const sidebarItems = {
-  user: [
+  orang_tua: [
     { label: "Overview", icon: LayoutDashboard, path: "overview" },
     { label: "Child Growth", icon: Baby, path: "growth" },
     { label: "Detection", icon: Sparkles, path: "detection" },
@@ -34,12 +34,13 @@ function DashboardPage() {
   const location = useLocation();
   const { role: routeRole } = useParams<{ role: Role }>();
   const session = JSON.parse(localStorage.getItem("stuntrack_session") || "null") as { role?: Role; name?: string } | null;
-  const role = ["user", "volunteer", "admin"].includes(routeRole as string) ? routeRole : session?.role;
+  const role = ["orang_tua", "volunteer", "admin"].includes(routeRole as string) ? routeRole : session?.role;
 
   if (!role || (session?.role && session.role !== role)) return <Navigate to="/login" replace />;
 
   // 3. Sesuaikan roleLabel untuk Admin
-  let roleLabel = "User";
+  let roleLabel = "Orang Tua";
+  if (role === "orang_tua") roleLabel = "Orang Tua";
   if (role === "volunteer") roleLabel = "Volunteer";
   if (role === "admin") roleLabel = "Admin";
   

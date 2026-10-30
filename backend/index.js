@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
 const db = require('./config/db');
 const { verifyToken, checkRole } = require('./middlewares/auth');
 const upload = require('./middlewares/upload');
@@ -10,7 +13,59 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads')); 
+
+const uploadsDirectory = path.join(__dirname, 'uploads');
+const guestUploadsDirectory = path.join(uploadsDirectory, 'guest');
+const blurScript = path.join(__dirname, 'blur_faces.py');
+app.use('/guest-uploads', express.static(guestUploadsDirectory));
+
+app.get('/uploads/:filename', verifyToken, checkRole(['admin', 'volunteer']), (req, res) => {
+    const filename = path.basename(req.params.filename);
+    const originalPath = path.join(uploadsDirectory, filename);
+    if (!fs.existsSync(originalPath)) return res.sendStatus(404);
+    return res.sendFile(originalPath);
+});
+
+function createBlurredPhoto(filename) {
+    const inputPath = path.join(uploadsDirectory, filename);
+    const blurredFilename = `blurred-${filename}.jpg`;
+    const outputPath = path.join(guestUploadsDirectory, blurredFilename);
+    const pythonCandidates = process.env.PYTHON_PATH ? [process.env.PYTHON_PATH] : ['python', 'py'];
+    let lastError = null;
+
+    for (const python of pythonCandidates) {
+        try {
+            const args = python === 'py' ? ['-3', blurScript, inputPath, outputPath] : [blurScript, inputPath, outputPath];
+            execFileSync(python, args, { stdio: 'pipe' });
+            if (fs.existsSync(outputPath)) return { filename: blurredFilename, path: outputPath };
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw new Error(`Gagal membuat gambar blur wajah${lastError ? `: ${lastError.message}` : ''}`);
+}
+
+async function backfillBlurredPhotos() {
+    try {
+        const [rows] = await db.query(
+            'SELECT id, photo_url FROM training_data WHERE photo_url IS NOT NULL AND (blurred_photo_url IS NULL OR blurred_photo_url = "")'
+        );
+        for (const row of rows) {
+            const originalFilename = path.basename(row.photo_url);
+            const originalPath = path.join(uploadsDirectory, originalFilename);
+            if (!fs.existsSync(originalPath)) continue;
+            try {
+                const blurred = createBlurredPhoto(originalFilename);
+                await db.query('UPDATE training_data SET blurred_photo_url = ? WHERE id = ?', [`/guest-uploads/${blurred.filename}`, row.id]);
+            } catch (error) {
+                console.error(`Gagal membuat blur untuk training_data ${row.id}:`, error.message);
+            }
+        }
+    } catch (error) {
+        console.error('Backfill blur wajah dilewati:', error.message);
+    }
+}
 
 // ==========================================
 // 1. AUTHENTICATION (Semua Role)
@@ -68,7 +123,7 @@ app.get('/api/labels', async (req, res) => {
         const requestedOffset = Number.parseInt(String(req.query.offset || '0'), 10);
         const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 5;
         const offset = Number.isFinite(requestedOffset) ? Math.max(requestedOffset, 0) : 0;
-        const conditions = [];
+        const conditions = ['td.blurred_photo_url IS NOT NULL'];
         const values = [];
 
         if (gender) {
@@ -82,12 +137,12 @@ app.get('/api/labels', async (req, res) => {
 
         const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
         const [data] = await db.query(
-            `SELECT td.*, u.name AS volunteer_name FROM training_data td LEFT JOIN users u ON u.id = td.volunteer_id${whereClause} ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
+            `SELECT td.id, td.volunteer_id, td.gender, td.height_cm, td.weight_kg, td.head_circ_cm, td.arm_circ_cm, td.blurred_photo_url AS photo_url, td.manual_label, td.notes, td.created_at, u.name AS volunteer_name FROM training_data td LEFT JOIN users u ON u.id = td.volunteer_id${whereClause} ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
             [...values, limit, offset]
         );
         const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data td${whereClause}`, values);
         const [categoryRows] = await db.query(
-            'SELECT gender, manual_label AS label, COUNT(*) AS count FROM training_data GROUP BY gender, manual_label'
+            'SELECT gender, manual_label AS label, COUNT(*) AS count FROM training_data WHERE blurred_photo_url IS NOT NULL GROUP BY gender, manual_label'
         );
         const total = Number(countRow.total || 0);
 
@@ -120,7 +175,7 @@ app.post('/api/admin/contents', verifyToken, checkRole(['admin']), upload.single
 // ==========================================
 // 3. USER: Profil Bayi & Scan AI (Graph Tracking)
 // ==========================================
-app.get('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) => {
+app.get('/api/user/babies', verifyToken, checkRole(['orang_tua']), async (req, res) => {
     try {
         const [babies] = await db.query(
             'SELECT id, name, gender, birth_date FROM babies WHERE user_id = ? ORDER BY name ASC',
@@ -132,7 +187,7 @@ app.get('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) =
     }
 });
 
-app.post('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) => {
+app.post('/api/user/babies', verifyToken, checkRole(['orang_tua']), async (req, res) => {
     const { name, gender, birth_date } = req.body;
     try {
         const [existingBabies] = await db.query(
@@ -157,7 +212,7 @@ app.post('/api/user/babies', verifyToken, checkRole(['user']), async (req, res) 
     }
 });
 
-app.post('/api/user/scans', verifyToken, checkRole(['user']), upload.single('photo'), async (req, res) => {
+app.post('/api/user/scans', verifyToken, checkRole(['orang_tua']), upload.single('photo'), async (req, res) => {
     const { baby_id, age_months, weight_kg, head_circ_cm, arm_circ_cm } = req.body;
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
     
@@ -180,7 +235,7 @@ app.post('/api/user/scans', verifyToken, checkRole(['user']), upload.single('pho
     }
 });
 
-app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['user']), async (req, res) => {
+app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['orang_tua']), async (req, res) => {
     try {
         const [scans] = await db.query(
             `SELECT s.age_months, s.weight_kg, s.head_circ_cm, s.arm_circ_cm,
@@ -209,13 +264,17 @@ app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), uploa
     if (!photo_url) return res.status(400).json({ message: 'Foto wajib diunggah untuk keperluan training' });
 
     try {
+        const blurred = createBlurredPhoto(req.file.filename);
         await db.query(
             // Tambahkan gender ke query INSERT
-            'INSERT INTO training_data (volunteer_id, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [req.user.id, gender, ...measurements, photo_url, manual_label, notes]
+            'INSERT INTO training_data (volunteer_id, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, photo_url, blurred_photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, gender, ...measurements, photo_url, `/guest-uploads/${blurred.filename}`, manual_label, notes]
         );
         res.status(201).json({ message: 'Data training berhasil disubmit' });
     } catch (err) {
+        if (req.file?.filename) {
+            try { fs.unlinkSync(path.join(uploadsDirectory, req.file.filename)); } catch { /* cleanup best effort */ }
+        }
         res.status(500).json({ error: err.message });
     }
 });
@@ -314,4 +373,5 @@ app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, re
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server StunTrack berjalan di http://localhost:${PORT}`);
+    void backfillBlurredPhotos();
 });
