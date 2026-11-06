@@ -351,10 +351,58 @@ app.get('/api/volunteer/training/history', verifyToken, checkRole(['volunteer'])
     }
 });
 
+app.get('/api/volunteer/leaderboard', verifyToken, checkRole(['volunteer']), async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT u.id, u.name, COUNT(td.id) AS contribution_count
+            FROM users u
+            LEFT JOIN training_data td ON td.volunteer_id = u.id
+            WHERE u.role = 'volunteer'
+            GROUP BY u.id, u.name
+            ORDER BY contribution_count DESC, u.name ASC
+        `);
+        const leaderboard = rows.map((row, index) => ({
+            rank: index + 1,
+            id: row.id,
+            name: row.name,
+            contribution_count: Number(row.contribution_count || 0),
+        }));
+        const current = leaderboard.find((item) => Number(item.id) === Number(req.user.id));
+        res.json({ leaderboard, current_rank: current?.rank || null, current_contribution_count: current?.contribution_count || 0 });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/admin/leaderboard', verifyToken, checkRole(['admin']), async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT u.id, u.name, u.email, COUNT(td.id) AS contribution_count,
+                   MAX(td.created_at) AS latest_contribution
+            FROM users u
+            LEFT JOIN training_data td ON td.volunteer_id = u.id
+            WHERE u.role = 'volunteer'
+            GROUP BY u.id, u.name, u.email
+            ORDER BY contribution_count DESC, u.name ASC
+        `);
+        res.json(rows.map((row, index) => ({
+            rank: index + 1,
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            contribution_count: Number(row.contribution_count || 0),
+            latest_contribution: row.latest_contribution,
+        })));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, res) => {
     try {
         const gender = typeof req.query.gender === 'string' ? req.query.gender : '';
         const label = typeof req.query.label === 'string' ? req.query.label : '';
+        const volunteerId = Number.parseInt(String(req.query.volunteer_id || ''), 10);
         const requestedLimit = Number.parseInt(String(req.query.limit || '5'), 10);
         const requestedOffset = Number.parseInt(String(req.query.offset || '0'), 10);
         const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 50) : 5;
@@ -369,6 +417,10 @@ app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, re
         if (label) {
             conditions.push('td.manual_label = ?');
             values.push(label);
+        }
+        if (Number.isFinite(volunteerId) && volunteerId > 0) {
+            conditions.push('td.volunteer_id = ?');
+            values.push(volunteerId);
         }
 
         const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';

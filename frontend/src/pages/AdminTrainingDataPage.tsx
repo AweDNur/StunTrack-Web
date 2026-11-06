@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, AlertCircle, X, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { apiUrl, protectedMediaUrl } from "../lib/api";
 
 interface TrainingData {
   id: number;
@@ -32,7 +33,7 @@ interface TrainingResponse {
 function protectedImageUrl(photoPath: string) {
   const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
   const token = typeof session.token === "string" ? session.token : "";
-  return `http://localhost:3000${photoPath}?token=${encodeURIComponent(token)}`;
+  return protectedMediaUrl(photoPath, token);
 }
 
 export default function AdminTrainingDataPage() {
@@ -53,7 +54,7 @@ export default function AdminTrainingDataPage() {
     async function fetchData() {
       try {
         const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
-        const res = await fetch("http://localhost:3000/api/admin/training", {
+        const res = await fetch(apiUrl("/api/admin/training"), {
           headers: { Authorization: `Bearer ${session.token}` },
         });
         const result = (await res.json()) as TrainingResponse;
@@ -82,7 +83,7 @@ export default function AdminTrainingDataPage() {
     setIsCategoryLoading(true);
     try {
       const params = new URLSearchParams({ gender: category.gender, label: category.label, limit: "5", offset: String(offset) });
-      const response = await fetch(`http://localhost:3000/api/admin/training?${params.toString()}`, { headers: { Authorization: `Bearer ${session.token}` } });
+      const response = await fetch(`${apiUrl("/api/admin/training")}?${params.toString()}`, { headers: { Authorization: `Bearer ${session.token}` } });
       const result = (await response.json()) as TrainingResponse;
       if (!response.ok) throw new Error(result.message || "Gagal mengambil dataset kategori.");
       setData((current) => append ? [...current, ...(result.data || [])] : (result.data || []));

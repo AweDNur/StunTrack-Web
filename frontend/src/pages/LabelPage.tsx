@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, AlertCircle, ChevronLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo-stuntrack.png";
+import { apiUrl } from "../lib/api";
 
 interface TrainingData {
   id: number;
@@ -39,7 +40,7 @@ const categories: Category[] = [
 ];
 
 function imageUrl(path: string) {
-  return `http://localhost:3000${path}`;
+  return apiUrl(path);
 }
 
 function datasetImageUrl(path: string | null) {
@@ -60,7 +61,7 @@ export default function LabelPage() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const response = await fetch("http://localhost:3000/api/labels");
+        const response = await fetch(apiUrl("/api/labels"));
         const result = (await response.json()) as LabelResponse;
         if (!response.ok) throw new Error("Gagal mengambil label dataset.");
         setCategoryCounts(Object.fromEntries((result.categories || []).map((item) => [`${item.gender}-${item.label}`, Number(item.count)])));
@@ -87,7 +88,7 @@ export default function LabelPage() {
     setError(null);
     try {
       const params = new URLSearchParams({ gender: category.gender, label: category.label, limit: "5", offset: String(offset) });
-      const response = await fetch(`http://localhost:3000/api/labels?${params.toString()}`);
+      const response = await fetch(`${apiUrl("/api/labels")}?${params.toString()}`);
       const result = (await response.json()) as LabelResponse;
       if (!response.ok) throw new Error("Gagal mengambil dataset label.");
       const availableData = (result.data || []).filter((item) => Boolean(item.photo_url));

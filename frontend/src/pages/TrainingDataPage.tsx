@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Upload, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { apiUrl } from "../lib/api";
 
 export default function TrainingDataPage() {
   const [photo, setPhoto] = useState<File | null>(null);
@@ -41,7 +42,7 @@ export default function TrainingDataPage() {
     formData.append("notes", notes);
 
     try {
-      const res = await fetch("http://localhost:3000/api/volunteer/training", {
+      const res = await fetch(apiUrl("/api/volunteer/training"), {
         method: "POST",
         headers: { Authorization: `Bearer ${session.token}` },
         body: formData,

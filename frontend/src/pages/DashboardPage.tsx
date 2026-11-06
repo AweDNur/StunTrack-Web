@@ -17,13 +17,14 @@ const sidebarItems = {
     { label: "Detection", icon: Sparkles, path: "detection" },
   ],
   volunteer: [
-    { label: "Overview", icon: LayoutDashboard, path: "" },
-    { label: "Community", icon: Users, path: "" },
+    { label: "Overview", icon: LayoutDashboard, path: "overview" },
+    { label: "Community", icon: Users, path: "community" },
     { label: "Training Data", icon: ClipboardList, path: "training" },
     { label: "Riwayat", icon: HistoryIcon, path: "history" },
   ],
   admin: [
-    { label: "Overview", icon: LayoutDashboard, path: "" },
+    { label: "Overview", icon: LayoutDashboard, path: "overview" },
+    { label: "Leaderboard", icon: Users, path: "leaderboard" },
     { label: "Kelola Konten", icon: FileText, path: "cms" },
     { label: "Review Data AI", icon: ImageIcon, path: "review-training" },
   ],
@@ -74,30 +75,17 @@ function DashboardPage() {
         </div>
         
         <nav className="mt-8 flex flex-1 flex-col gap-2" aria-label="Dashboard navigation">
-          {items.map(({ label, icon: Icon, path }, index) => (
-            path ? (
-              <Link
-                key={label}
-                to={`/dashboard/${role}/${path}`}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${
-                  location.pathname.includes(path) ? "bg-white/20 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <Icon size={19} />
-                <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>{label}</span>
-              </Link>
-            ) : (
-              <button
-                key={label}
-                type="button"
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${
-                  index === 0 && location.pathname === `/dashboard/${role}` ? "bg-white text-[#1c5fbd] shadow-sm" : "text-blue-100 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <Icon size={19} />
-                <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>{label}</span>
-              </button>
-            )
+          {items.map(({ label, icon: Icon, path }) => (
+            <Link
+              key={label}
+              to={`/dashboard/${role}/${path}`}
+              className={`flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-bold transition max-md:justify-center ${
+                location.pathname.includes(path) ? "bg-white/20 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Icon size={19} />
+              <span className={`max-md:hidden ${isSidebarCollapsed ? "hidden" : ""}`}>{label}</span>
+            </Link>
           ))}
         </nav>
 

@@ -11,6 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
+import { apiUrl } from "../lib/api";
 
 type Role = "orang_tua" | "volunteer";
 
@@ -46,7 +47,7 @@ function RegisterPage() {
     };
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(apiUrl("/api/auth/register"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

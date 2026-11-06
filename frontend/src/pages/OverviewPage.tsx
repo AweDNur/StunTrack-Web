@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Baby, ChevronRight, ClipboardPlus, Frown, Smile, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { apiUrl } from "../lib/api";
 
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
 type Scan = { ai_result: unknown; created_at: string; age_months: number; weight_kg?: number; head_circ_cm?: number; arm_circ_cm?: number };
@@ -41,12 +42,12 @@ function OverviewPage() {
   useEffect(() => {
     if (!session?.token) return;
     const headers = { Authorization: `Bearer ${session.token}` };
-    fetch("/api/user/babies", { headers })
+    fetch(apiUrl("/api/user/babies"), { headers })
       .then((response) => response.json())
       .then(async (profiles: BabyProfile[]) => {
         setBabies(profiles);
         const scans = await Promise.all(profiles.map(async (baby) => {
-          const response = await fetch(`/api/user/babies/${baby.id}/scans`, { headers });
+          const response = await fetch(apiUrl(`/api/user/babies/${baby.id}/scans`), { headers });
           const data = (await response.json().catch(() => [])) as Scan[];
           const latestScan = [...data].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at))[0];
           return latestScan ? { baby, scan: latestScan } : null;

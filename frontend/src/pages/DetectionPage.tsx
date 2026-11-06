@@ -1,5 +1,6 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { Activity, AlertCircle, Baby, CheckCircle2, ImagePlus, Info, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
+import { aiApiUrl, apiUrl } from "../lib/api";
 
 type Session = { token?: string; role?: "orang_tua" | "volunteer" | "admin"; name?: string };
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
@@ -40,7 +41,7 @@ function DetectionPage() {
   const today = todayInputValue();
 
   useEffect(() => {
-    fetch("/ai-api/status")
+    fetch(aiApiUrl("/status"))
       .then((response) => response.json())
       .then((data: { model_ready?: boolean }) => setIsReady(Boolean(data.model_ready)))
       .catch(() => setIsReady(false));
@@ -48,7 +49,7 @@ function DetectionPage() {
 
   useEffect(() => {
     if (!session?.token) return;
-    fetch("/api/user/babies", { headers: { Authorization: `Bearer ${session.token}` } })
+    fetch(apiUrl("/api/user/babies"), { headers: { Authorization: `Bearer ${session.token}` } })
       .then((response) => response.json())
       .then((data: BabyProfile[]) => setBabies(Array.isArray(data) ? data : []))
       .catch(() => setBabies([]));
@@ -105,7 +106,7 @@ function DetectionPage() {
     else form.delete("image");
 
     try {
-      const response = await fetch("/ai-api/predict", { method: "POST", body: form });
+      const response = await fetch(aiApiUrl("/predict"), { method: "POST", body: form });
       const result = (await response.json().catch(() => ({}))) as Prediction & { error?: string };
       if (!response.ok || result.error) throw new Error(result.error || "Prediksi belum berhasil.");
       setPrediction(result);
@@ -134,7 +135,7 @@ function DetectionPage() {
     try {
       let babyId = Number(selectedBabyId);
       if (!babyId) {
-        const babyResponse = await fetch("/api/user/babies", {
+      const babyResponse = await fetch(apiUrl("/api/user/babies"), {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -162,7 +163,7 @@ function DetectionPage() {
       scanForm.set("ai_result", JSON.stringify(prediction));
       if (image) scanForm.set("photo", image);
 
-      const scanResponse = await fetch("/api/user/scans", {
+      const scanResponse = await fetch(apiUrl("/api/user/scans"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: scanForm,

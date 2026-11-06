@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, AlertCircle, ImageIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { apiUrl, protectedMediaUrl } from "../lib/api";
 
 interface TrainingData {
   id: number;
@@ -17,7 +18,7 @@ interface TrainingData {
 function protectedImageUrl(photoPath: string) {
   const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
   const token = typeof session.token === "string" ? session.token : "";
-  return `http://localhost:3000${photoPath}?token=${encodeURIComponent(token)}`;
+  return protectedMediaUrl(photoPath, token);
 }
 
 export default function VolunteerHistoryPage() {
@@ -32,7 +33,7 @@ export default function VolunteerHistoryPage() {
     async function fetchHistory() {
       try {
         const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
-        const res = await fetch("http://localhost:3000/api/volunteer/training/history", {
+        const res = await fetch(apiUrl("/api/volunteer/training/history"), {
           headers: {
             Authorization: `Bearer ${session.token}`,
           },

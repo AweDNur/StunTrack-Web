@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDownUp, Baby, LineChart as LineChartIcon, TrendingUp } from "lucide-react";
 import { Brush, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { apiUrl } from "../lib/api";
 
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
 type Scan = { age_months: number; weight_kg: number; head_circ_cm: number; arm_circ_cm: number; ai_result: string; created_at: string };
@@ -61,7 +62,7 @@ function ChildGrowthPage() {
 
   useEffect(() => {
     if (!session?.token) return;
-    fetch("/api/user/babies", { headers: { Authorization: `Bearer ${session.token}` } })
+    fetch(apiUrl("/api/user/babies"), { headers: { Authorization: `Bearer ${session.token}` } })
       .then((response) => response.json())
       .then((data: BabyProfile[]) => {
         setBabies(data);
@@ -71,7 +72,7 @@ function ChildGrowthPage() {
 
   useEffect(() => {
     if (!session?.token || !selectedId) return;
-    fetch(`/api/user/babies/${selectedId}/scans`, { headers: { Authorization: `Bearer ${session.token}` } })
+      fetch(apiUrl(`/api/user/babies/${selectedId}/scans`), { headers: { Authorization: `Bearer ${session.token}` } })
       .then((response) => response.json())
       .then((data: Scan[]) => setScans(Array.isArray(data) ? data : []));
   }, [selectedId, session?.token]);

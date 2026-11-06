@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, HeartPulse, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo-stuntrack.png";
+import { apiUrl } from "../lib/api";
 
 type AboutSections = {
   main: string;
@@ -31,7 +32,7 @@ export default function AboutPage() {
   useEffect(() => {
     async function fetchAbout() {
       try {
-        const response = await fetch("http://localhost:3000/api/about");
+        const response = await fetch(apiUrl("/api/about"));
         const data = await response.json();
         setSections({ ...emptySections, ...(data.sections || {}), main: data.sections?.main || data.content || "" });
       } catch {

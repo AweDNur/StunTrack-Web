@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, FileText, Loader2, Save } from "lucide-react";
 import RichTextEditor from "../components/RichTextEditor";
+import { apiUrl } from "../lib/api";
 
 type SectionKey = "main" | "theSite" | "story" | "credits" | "people" | "papers" | "press";
 type AboutSections = Record<SectionKey, string>;
@@ -26,7 +27,7 @@ export default function AdminCMSPage() {
   useEffect(() => {
     async function fetchAbout() {
       try {
-        const response = await fetch("http://localhost:3000/api/about");
+        const response = await fetch(apiUrl("/api/about"));
         const data = await response.json();
         setSections({ ...initialSections, ...(data.sections || {}), main: data.sections?.main || data.content || "" });
       } catch (error) {
@@ -52,7 +53,7 @@ export default function AdminCMSPage() {
     setMessage(null);
     try {
       const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
-      const response = await fetch("http://localhost:3000/api/admin/about", {
+      const response = await fetch(apiUrl("/api/admin/about"), {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.token}` },
         body: JSON.stringify({ content: sections.main, the_site: sections.theSite, story: sections.story, credits: sections.credits, people: sections.people, papers: sections.papers, press: sections.press }),

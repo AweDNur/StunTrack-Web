@@ -12,6 +12,9 @@ import OverviewPage from "./pages/OverviewPage";
 import ChildGrowthPage from "./pages/ChildGrowthPage";
 import AboutPage from "./pages/AboutPage";
 import LabelPage from "./pages/LabelPage";
+import RoleOverviewPage from "./pages/RoleOverviewPage";
+import VolunteerCommunityPage from "./pages/VolunteerCommunityPage";
+import AdminLeaderboardPage from "./pages/AdminLeaderboardPage";
 
 function App() {
   return (
@@ -24,6 +27,10 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         
         <Route path="/dashboard/:role" element={<DashboardPage />}>
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<RoleOverviewPage />} />
+          <Route path="community" element={<VolunteerCommunityPage />} />
+          <Route path="leaderboard" element={<AdminLeaderboardPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="growth" element={<ChildGrowthPage />} />
           <Route path="detection" element={<DetectionPage />} />
