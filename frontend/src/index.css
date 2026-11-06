@@ -95,6 +95,51 @@ p {
   margin: 0;
 }
 
+.rich-text-editor h1,
+.rich-text-editor h2 {
+  color: #303b45;
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: normal;
+  margin: 0.7rem 0 0.45rem;
+}
+
+.rich-text-editor h1 {
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+
+.rich-text-editor h2 {
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.rich-text-editor blockquote {
+  border-left: 4px solid #1c5fbd;
+  color: #607178;
+  font-style: italic;
+  margin: 0.75rem 0;
+  padding: 0.5rem 0.9rem;
+}
+
+.rich-text-editor ul,
+.rich-text-editor ol {
+  margin: 0.5rem 0;
+  padding-left: 1.6rem;
+}
+
+.rich-text-editor ul {
+  list-style: disc;
+}
+
+.rich-text-editor ol {
+  list-style: decimal;
+}
+
+.rich-text-editor li {
+  margin: 0.2rem 0;
+}
+
 code,
 .counter {
   font-family: var(--mono);

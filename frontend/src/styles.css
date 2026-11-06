@@ -32,3 +32,93 @@
     font: inherit;
   }
 }
+
+/* Rich text editor formatting. These selectors target Tiptap's actual
+   ProseMirror content element and intentionally stay scoped to the editor. */
+[data-rich-editor] .rich-text-content .tiptap > h1,
+[data-rich-editor] .rich-text-content .tiptap > h2 {
+  margin: 0.75rem 0 0.5rem !important;
+  color: #303b45 !important;
+  font-family: inherit !important;
+  font-weight: 800 !important;
+  letter-spacing: normal !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > h1 {
+  font-size: 2rem !important;
+  line-height: 1.2 !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > h2 {
+  font-size: 1.5rem !important;
+  line-height: 1.25 !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > blockquote {
+  margin: 0.75rem 0 !important;
+  border-left: 4px solid #1c5fbd !important;
+  padding: 0.5rem 0.9rem !important;
+  color: #607178 !important;
+  font-style: italic;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > ul,
+[data-rich-editor] .rich-text-content .tiptap > ol {
+  margin: 0.5rem 0 !important;
+  padding-left: 1.6rem !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > ul {
+  list-style: disc !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > ol {
+  list-style: decimal !important;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > ul > li,
+[data-rich-editor] .rich-text-content .tiptap > ol > li {
+  margin: 0.2rem 0 !important;
+}
+
+/* The Tailwind reset intentionally makes headings inherit the body size.
+   Restore the saved rich-text hierarchy in About and the CMS live preview. */
+.about-rich-preview h1,
+.about-rich-preview h2 {
+  color: #303b45;
+  font-weight: 800;
+  letter-spacing: normal;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.about-rich-preview h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.about-rich-preview h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.about-rich-preview blockquote {
+  margin: 0.75rem 0;
+  border-left: 4px solid #1c5fbd;
+  padding: 0.5rem 0.9rem;
+  color: #607178;
+  font-style: italic;
+}
+
+.about-rich-preview ul,
+.about-rich-preview ol {
+  margin: 0.5rem 0;
+  padding-left: 1.6rem;
+}
+
+.about-rich-preview ul {
+  list-style: disc;
+}
+
+.about-rich-preview ol {
+  list-style: decimal;
+}

@@ -286,11 +286,24 @@ app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), uploa
 // Guest / Public - Melihat isi halaman About
 app.get('/api/about', async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT content, updated_at FROM about_web WHERE id = 1');
+        const [rows] = await db.query('SELECT content, the_site, story, credits, people, papers, press, updated_at FROM about_web WHERE id = 1');
         if (rows.length === 0) {
-            return res.json({ content: 'Belum ada informasi about.' });
+            return res.json({ content: 'Belum ada informasi about.', sections: {} });
         }
-        res.json(rows[0]);
+        const row = rows[0];
+        res.json({
+            content: row.content || '',
+            sections: {
+                main: row.content || '',
+                theSite: row.the_site || '',
+                story: row.story || '',
+                credits: row.credits || '',
+                people: row.people || '',
+                papers: row.papers || '',
+                press: row.press || '',
+            },
+            updated_at: row.updated_at,
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -298,7 +311,7 @@ app.get('/api/about', async (req, res) => {
 
 // Admin - Memperbarui konten halaman About
 app.put('/api/admin/about', verifyToken, checkRole(['admin']), async (req, res) => {
-    const { content } = req.body;
+    const { content, the_site, story, credits, people, papers, press } = req.body;
     
     if (!content) return res.status(400).json({ message: 'Konten tidak boleh kosong' });
 
@@ -306,8 +319,17 @@ app.put('/api/admin/about', verifyToken, checkRole(['admin']), async (req, res) 
         // Menggunakan teknik "INSERT ON DUPLICATE KEY UPDATE"
         // Artinya: Jika id=1 belum ada, buat baru. Jika sudah ada, cukup update kontennya.
         await db.query(
-            'INSERT INTO about_web (id, content) VALUES (1, ?) ON DUPLICATE KEY UPDATE content = ?',
-            [content, content]
+            `INSERT INTO about_web (id, content, the_site, story, credits, people, papers, press)
+             VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               content = VALUES(content),
+               the_site = VALUES(the_site),
+               story = VALUES(story),
+               credits = VALUES(credits),
+               people = VALUES(people),
+               papers = VALUES(papers),
+               press = VALUES(press)`,
+            [content, the_site || '', story || '', credits || '', people || '', papers || '', press || '']
         );
         res.json({ message: 'Konten About Web berhasil diperbarui!' });
     } catch (err) {

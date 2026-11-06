@@ -1,145 +1,85 @@
 import { useEffect, useState } from "react";
-import { FileText, Save, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, Loader2, Save } from "lucide-react";
+import RichTextEditor from "../components/RichTextEditor";
+
+type SectionKey = "main" | "theSite" | "story" | "credits" | "people" | "papers" | "press";
+type AboutSections = Record<SectionKey, string>;
+
+const sectionFields: Array<{ key: SectionKey; title: string; description: string; rows: number }> = [
+  { key: "main", title: "About Utama", description: "Judul dan pengantar utama halaman About.", rows: 6 },
+  { key: "theSite", title: "The Site", description: "Penjelasan mengenai fitur dan cara kerja website.", rows: 7 },
+  { key: "story", title: "Story", description: "Cerita, latar belakang, dan perjalanan StunTrack.", rows: 10 },
+  { key: "credits", title: "Credits", description: "Kontributor, dukungan, dan pihak yang membantu.", rows: 7 },
+  { key: "people", title: "People", description: "Daftar orang atau tim yang terlibat.", rows: 7 },
+  { key: "papers", title: "Papers", description: "Publikasi, referensi, atau penelitian terkait.", rows: 8 },
+  { key: "press", title: "Press", description: "Berita, publikasi media, atau tautan press.", rows: 7 },
+];
+
+const initialSections: AboutSections = { main: "", theSite: "", story: "", credits: "", people: "", papers: "", press: "" };
 
 export default function AdminCMSPage() {
-  const [content, setContent] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
+  const [sections, setSections] = useState<AboutSections>(initialSections);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Mengambil data saat ini dari backend
   useEffect(() => {
     async function fetchAbout() {
       try {
-        const res = await fetch("http://localhost:3000/api/about");
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.message || "Gagal mengambil data about");
-        }
-        
-        setContent(data.content || "");
-      } catch (err: any) {
-        setMessage({ type: "error", text: err.message });
+        const response = await fetch("http://localhost:3000/api/about");
+        const data = await response.json();
+        setSections({ ...initialSections, ...(data.sections || {}), main: data.sections?.main || data.content || "" });
+      } catch (error) {
+        setMessage({ type: "error", text: error instanceof Error ? error.message : "Gagal mengambil data About." });
       } finally {
         setLoading(false);
       }
     }
-
-    fetchAbout();
+    void fetchAbout();
   }, []);
 
-  // Menyimpan pembaruan ke backend
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!content.trim()) {
-      setMessage({ type: "error", text: "Konten tidak boleh kosong." });
+  function updateSection(key: SectionKey, value: string) {
+    setSections((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleSave(event: React.FormEvent) {
+    event.preventDefault();
+    if (!sections.main.trim()) {
+      setMessage({ type: "error", text: "Konten About Utama tidak boleh kosong." });
       return;
     }
-
     setSaving(true);
     setMessage(null);
-
     try {
       const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
-      const res = await fetch("http://localhost:3000/api/admin/about", {
+      const response = await fetch("http://localhost:3000/api/admin/about", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.token}`,
-        },
-        body: JSON.stringify({ content }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ content: sections.main, the_site: sections.theSite, story: sections.story, credits: sections.credits, people: sections.people, papers: sections.papers, press: sections.press }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || data.error || "Gagal menyimpan pembaruan");
-      }
-
-      setMessage({ type: "success", text: "Konten About Web berhasil diperbarui!" });
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Terjadi kesalahan server" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || "Gagal menyimpan pembaruan.");
+      setMessage({ type: "success", text: "Semua section About berhasil diperbarui." });
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Terjadi kesalahan server." });
     } finally {
       setSaving(false);
-      // Menghilangkan pesan sukses setelah 3 detik
-      setTimeout(() => setMessage(null), 3000);
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="animate-spin text-[#1c5fbd]" size={32} />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-[#1c5fbd]" size={32} /></div>;
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="mb-6">
-        <h2 className="text-2xl font-black text-[#303b45]">Kelola Konten Landing Page</h2>
-        <p className="mt-1 text-sm text-[#71838d]">
-          Pembaruan yang Anda simpan di sini akan langsung tampil pada halaman utama pengunjung (Guest).
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-[#e3eaf2] bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-6 flex items-center gap-3 border-b border-[#e3eaf2] pb-4">
-          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#eaf2ff] text-[#1c5fbd]">
-            <FileText size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-[#303b45]">Bagian "Tentang Kami" (About)</h3>
-            <p className="text-xs font-semibold text-[#8a9aa6]">Edit teks deskripsi website StunTrack</p>
-          </div>
-        </div>
-
-        {message && (
-          <div
-            className={`mb-6 flex items-center gap-3 rounded-xl p-4 text-sm font-semibold ${
-              message.type === "success"
-                ? "border border-green-200 bg-green-50 text-green-700"
-                : "border border-red-200 bg-red-50 text-red-700"
-            }`}
-          >
-            {message.type === "success" ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-            <span>{message.text}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSave}>
-          <div className="mb-6">
-            <label className="mb-2 block text-sm font-bold text-[#303b45]">
-              Isi Konten About
-            </label>
-            <textarea
-              rows={8}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Tuliskan deskripsi tentang website StunTrack di sini..."
-              className="w-full rounded-xl border border-[#d1dbe5] bg-[#f8fafc] p-4 text-sm font-medium text-[#303b45] transition focus:border-[#1c5fbd] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#1c5fbd]/10"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-[#1c5fbd] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#154b96] disabled:opacity-50"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" /> Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save size={18} /> Simpan Perubahan
-                </>
-              )}
-            </button>
-          </div>
+    <div className="mx-auto max-w-7xl">
+      <div className="mb-6"><h2 className="text-2xl font-black text-[#303b45]">Kelola About Page</h2><p className="mt-1 text-sm text-[#71838d]">Kelola setiap bagian About secara terpisah dan lihat preview sebelum menyimpan.</p></div>
+      {message && <div className={`mb-6 flex items-center gap-3 rounded-xl p-4 text-sm font-semibold ${message.type === "success" ? "border border-green-200 bg-green-50 text-green-700" : "border border-red-200 bg-red-50 text-red-700"}`}>{message.type === "success" ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}<span>{message.text}</span></div>}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.82fr)]">
+        <form onSubmit={handleSave} className="space-y-4">
+          {sectionFields.map((field) => <section key={field.key} className="rounded-2xl border border-[#e3eaf2] bg-white p-5 shadow-sm"><div className="mb-4 flex items-start gap-3 border-b border-[#e3eaf2] pb-4"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#eaf2ff] text-[#1c5fbd]"><FileText size={20} /></div><div><h3 className="font-black text-[#303b45]">{field.title}</h3><p className="mt-1 text-xs font-semibold text-[#8a9aa6]">{field.description}</p></div></div><RichTextEditor rows={field.rows} value={sections[field.key]} onChange={(value) => updateSection(field.key, value)} placeholder={`Tulis konten ${field.title}...`} /></section>)}
+          <button type="submit" disabled={saving} className="sticky bottom-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1c5fbd] px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-[#154b96] disabled:opacity-50">{saving ? <><Loader2 size={18} className="animate-spin" /> Menyimpan...</> : <><Save size={18} /> Simpan Semua Perubahan</>}</button>
         </form>
+
+        <aside className="xl:sticky xl:top-6 xl:self-start"><div className="overflow-hidden rounded-xl border border-[#d7d0c9] bg-[#fffdf9] shadow-[0_12px_35px_rgba(70,53,39,0.12)]"><div className="border-b border-[#e7dfd7] bg-white/80 px-5 py-4"><p className="text-xs font-black uppercase tracking-wider text-[#71838d]">Live Preview</p><h3 className="mt-1 text-xl font-black text-[#1d61bc]">About StunTrack</h3></div><div className="about-rich-preview max-h-[calc(100vh-180px)] overflow-y-auto px-5 py-6"><section className="border-b border-[#e7dfd7] pb-5"><div className="prose prose-sm max-w-none text-[#405155]" dangerouslySetInnerHTML={{ __html: sections.main || "<p>Preview About Utama...</p>" }} /></section>{sectionFields.slice(1).map((field) => <section key={field.key} className="border-b border-[#e7dfd7] py-5 last:border-b-0"><h4 className="mb-2 text-sm font-black uppercase tracking-wide text-[#303b45]">{field.title}</h4><div className="prose prose-sm max-w-none text-[#405155]" dangerouslySetInnerHTML={{ __html: sections[field.key] || `<p>Preview ${field.title}...</p>` }} /></section>)}</div></div></aside>
       </div>
     </div>
   );
