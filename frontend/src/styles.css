@@ -122,3 +122,9 @@
 .about-rich-preview ol {
   list-style: decimal;
 }
+
+.dashboard-cms-shell {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+}

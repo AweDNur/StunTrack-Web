@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Tambahkan FileText (untuk CMS) dan Image (untuk Training Data) ke import lucide-react
 import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon, ChevronLeft, ChevronRight } from "lucide-react";
@@ -45,6 +45,16 @@ function DashboardPage() {
   if (role === "admin") roleLabel = "Admin";
   
   const items = sidebarItems[role];
+  const isCmsPage = location.pathname.endsWith("/cms");
+
+  useEffect(() => {
+    if (!isCmsPage) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isCmsPage]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // (Kode sisanya di dalam DashboardPage.tsx tetap sama seperti sebelumnya, tidak ada yang perlu diubah)
@@ -54,9 +64,9 @@ function DashboardPage() {
   }
 
   return (
-    <main className="flex min-h-screen bg-[#f5f8fc] text-[#24313a]">
+    <main className={`flex bg-[#f5f8fc] text-[#24313a] ${isCmsPage ? "dashboard-cms-shell h-dvh min-h-0 overflow-hidden" : "min-h-screen"}`}>
       {/* ... (isi aside dan header tetap sama) ... */}
-      <aside className={`relative flex shrink-0 flex-col bg-[#1c5fbd] px-5 py-6 text-white transition-[width,padding] duration-300 max-md:w-[84px] max-md:px-3 ${isSidebarCollapsed ? "w-[84px] px-3" : "w-[250px]"}`}>
+      <aside className={`relative flex shrink-0 flex-col bg-[#1c5fbd] px-5 py-6 text-white transition-[width,padding] duration-300 max-md:w-[84px] max-md:px-3 ${isCmsPage ? "h-full" : ""} ${isSidebarCollapsed ? "w-[84px] px-3" : "w-[250px]"}`}>
         <button type="button" onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)} className="absolute -right-3 top-1/2 z-20 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-[#dce6ef] bg-white text-[#1c5fbd] shadow-md transition hover:bg-[#eaf2ff] max-md:hidden" aria-label={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"} title={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}>{isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button>
         <div className="flex items-center gap-3 border-b border-white/15 px-2 pb-6 max-md:justify-center">
           <img className="h-10 w-10 rounded-xl bg-white object-contain p-1" src={logo} alt="" />
@@ -99,7 +109,7 @@ function DashboardPage() {
         </div>
       </aside>
 
-      <section className="min-w-0 flex-1 flex flex-col h-screen overflow-hidden">
+      <section className={`min-w-0 flex-1 flex flex-col overflow-hidden ${isCmsPage ? "h-full min-h-0" : "h-screen"}`}>
         <header className="flex min-h-[82px] items-center justify-between border-b border-[#e3eaf2] bg-white px-5 shadow-[0_2px_12px_rgba(35,63,90,0.04)] sm:px-8">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.14em] text-[#1c5fbd]">Dashboard</p>
