@@ -11,9 +11,9 @@ import { Link } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
 
-import babyImage from "../assets/gambar-1.jpg";
-import nutritionImage from "../assets/gambar-2.avif";
-import growthImage from "../assets/gambar-3.webp";
+import GambarHasilStunting from "../assets/hasilstunting.png";
+import GambarHasilNormal from "../assets/hasilnormal.png";
+import GambarGrafikPertumbuhan from "../assets/grafikpertumbuhan.png";
 
 type MetricKey = "stunting" | "nutrition";
 
@@ -227,16 +227,16 @@ function HeroVisual() {
 
   const slides = [
     {
-      image: babyImage,
-      alt: "Bayi sehat",
+      image: GambarHasilStunting,
+      alt: "Gambar Hasil Scan Stunting",
     },
     {
-      image: nutritionImage,
-      alt: "Makanan bergizi untuk bayi",
+      image: GambarHasilNormal,
+      alt: "Gambar Hasil Scan Normal",
     },
     {
-      image: growthImage,
-      alt: "Pemantauan pertumbuhan bayi",
+      image: GambarGrafikPertumbuhan,
+      alt: "Gambar Grafik Pertumbuhan",
     },
   ];
 
@@ -272,7 +272,8 @@ function HeroVisual() {
             <img
               src={slide.image}
               alt={slide.alt}
-              className="absolute inset-0 h-full w-full object-cover"
+              className={`absolute inset-0 h-full w-full ${index === 2 ? "object-contain" : "object-cover"
+                }`}
             />
 
             {/* Soft overlay to match the StunTrack design */}
@@ -284,7 +285,7 @@ function HeroVisual() {
       {/* Nutrition badge */}
       <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-full border border-[#ecd481] bg-[#fff8df]/95 px-3 py-2 text-xs font-extrabold uppercase text-[#866313] shadow-[0_10px_24px_rgba(36,49,58,0.1)] sm:right-6 sm:top-6 sm:text-sm">
         <Apple size={18} />
-        Balanced Nutrition
+        Preview Aplikasi
       </div>
 
       {/* Slide indicators */}
@@ -300,8 +301,8 @@ function HeroVisual() {
             aria-label={`Show slide ${index + 1}`}
             aria-pressed={currentSlide === index}
             className={`h-2.5 rounded-full border border-white/80 transition-all duration-300 ${currentSlide === index
-                ? "w-7 bg-[#168679]"
-                : "w-2.5 bg-white/80 hover:bg-white"
+              ? "w-7 bg-[#168679]"
+              : "w-2.5 bg-white/80 hover:bg-white"
               }`}
           />
         ))}
