@@ -8,12 +8,43 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { apiUrl } from "../lib/api";
 
 import logo from "../assets/logo-stuntrack.png";
 
 import GambarHasilStunting from "../assets/hasilstunting.png";
 import GambarHasilNormal from "../assets/hasilnormal.png";
 import GambarGrafikPertumbuhan from "../assets/grafikpertumbuhan.png";
+
+const indonesiaBounds: [[number, number], [number, number]] = [[-11.5, 94], [6.5, 141.5]];
+const mapCenter: [number, number] = [-2.5, 118];
+
+function IndonesiaMapView() {
+  const map = useMap();
+  useEffect(() => {
+    map.setMaxBounds(indonesiaBounds);
+    map.setMinZoom(4);
+    map.setMaxZoom(13);
+  }, [map]);
+  return null;
+}
+
+type MapPoint = { region_code: string; region_name: string; city_code: string; city_name: string; province_name: string; total: number; latitude: number | null; longitude: number | null };
+
+const provinceCenters: Record<string, [number, number]> = {
+  "11": [4.2, 96.8], "12": [2.3, 99.5], "13": [-0.7, 100.6], "14": [0.5, 101.7], "15": [-1.6, 103.6], "16": [-3.2, 104.5], "17": [-3.8, 102.3], "18": [-5.1, 105.3], "19": [-2.2, 106.1], "21": [0.7, 104.4],
+  "31": [-6.2, 106.8], "32": [-6.9, 107.6], "33": [-7.3, 110.1], "34": [-7.9, 110.4], "35": [-7.8, 112.7], "36": [-6.4, 106.1], "51": [-8.4, 115.1], "52": [-8.6, 117.4], "53": [-9.7, 119.2], "61": [0.1, 109.5], "62": [-1.7, 113.4], "63": [-3.0, 115.4], "64": [0.6, 116.5], "65": [2.1, 117.0], "71": [0.7, 124.0], "72": [-1.4, 121.4], "73": [-3.7, 119.4], "74": [-4.0, 122.0], "75": [0.7, 122.4], "76": [-2.5, 119.0], "81": [-3.1, 129.2], "82": [1.4, 128.2], "91": [-4.3, 138.7], "92": [-0.9, 134.0],
+};
+
+const cityCenters: Record<string, [number, number]> = {
+  "3171": [-6.2, 106.82], "3172": [-6.23, 106.9], "3173": [-6.16, 106.75], "3174": [-6.3, 106.85], "3175": [-6.35, 106.8],
+  "3273": [-6.9175, 107.6191], "3276": [-6.2383, 106.9756], "3277": [-6.4025, 106.7942], "3278": [-6.595, 106.8167],
+  "3374": [-7.0051, 110.4381], "3471": [-7.7956, 110.3695], "3578": [-7.2575, 112.7521], "3573": [-7.9797, 112.6304], "3579": [-7.8167, 112.0111],
+  "5171": [-8.65, 115.2167], "5271": [-8.5833, 116.1167], "7371": [-5.1477, 119.4327], "6471": [-0.5022, 117.1536], "7171": [1.4748, 124.8421],
+};
 
 type MetricKey = "stunting" | "nutrition";
 
@@ -24,6 +55,10 @@ const chartSeries = {
     color: "#1c5fbd",
     softColor: "#fff0ec",
     source: "SSGBI / SSGI / SKI public prevalence reports",
+    sources: [
+      { label: "Kemenkes/BKPK – Tren stunting 2013–2023", href: "https://www.badankebijakan.kemkes.go.id/repositori/id/eprint/5535/1/06%20factsheet%20Gizi%20SKI_bahasa.pdf" },
+      { label: "SSGI 2024", href: "https://www.kemkes.go.id/id/ssgi-2024-prevalensi-stunting-nasional-turun-menjadi-198" },
+    ],
     values: [
       { year: "2019", value: 27.7 },
       { year: "2021", value: 24.4 },
@@ -38,6 +73,11 @@ const chartSeries = {
     color: "#3B75C8",
     softColor: "#eaf8f5",
     source: "SSGI / SKI public prevalence reports",
+    sources: [
+      { label: "Profil Kesehatan Indonesia 2022", href: "https://www.kemkes.go.id/app_asset/file_content_download/1702958336658115008345c5.53299420.pdf" },
+      { label: "Hasil Utama SKI 2023", href: "https://www.badankebijakan.kemkes.go.id/daftar-frequently-asked-question-seputar-hasil-utama-ski-2023/hasil-utama-ski-2023/" },
+      { label: "SSGI 2024", href: "https://www.kemkes.go.id/id/ssgi-2024-prevalensi-stunting-nasional-turun-menjadi-198" },
+    ],
     values: [
       { year: "2019", value: 7.4 },
       { year: "2021", value: 7.1 },
@@ -205,6 +245,10 @@ function GrowthChart() {
         <p className="m-0 text-[0.83rem] leading-snug text-[#78868a]">
           Data note: {activeSeries.source}. National prevalence is not an individual diagnosis.
         </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.83rem] leading-snug text-[#78868a]">
+          <span className="font-black text-[#53626b]">Source:</span>
+          {activeSeries.sources.map((source, index) => <span key={source.href}>{index > 0 && <span className="mr-2">·</span>}<a className="font-bold text-[#1c5fbd] underline decoration-[#9db9e8] underline-offset-2 hover:text-[#164a96]" href={source.href} target="_blank" rel="noreferrer">{source.label}</a></span>)}
+        </div>
       </div>
     </section>
   );
@@ -224,6 +268,7 @@ function BrandLogo() {
 
 function HeroVisual() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [visibleSlides, setVisibleSlides] = useState(1);
 
   const slides = [
     {
@@ -238,33 +283,58 @@ function HeroVisual() {
       image: GambarGrafikPertumbuhan,
       alt: "Gambar Grafik Pertumbuhan",
     },
+    {
+      image: GambarHasilStunting,
+      alt: "Gambar Hasil Scan Stunting 2",
+    },
+    {
+      image: GambarHasilNormal,
+      alt: "Gambar Hasil Scan Normal 2",
+    },
+    {
+      image: GambarGrafikPertumbuhan,
+      alt: "Gambar Grafik Pertumbuhan 2",
+    },
   ];
+
+  const slideCount = Math.max(1, Math.floor(slides.length - visibleSlides + 1));
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setCurrentSlide((previous) => (previous + 1) % slides.length);
+      setCurrentSlide((previous) => (previous + 1) % slideCount);
     }, 4000);
 
     return () => window.clearInterval(interval);
-  }, [slides.length]);
+  }, [slideCount]);
+
+  useEffect(() => {
+    function updateVisibleSlides() {
+      setVisibleSlides(window.innerWidth >= 1024 ? 2.25 : window.innerWidth >= 640 ? 1.55 : 1);
+      setCurrentSlide(0);
+    }
+    updateVisibleSlides();
+    window.addEventListener("resize", updateVisibleSlides);
+    return () => window.removeEventListener("resize", updateVisibleSlides);
+  }, []);
 
   return (
     <div
-      className="relative min-h-[250px] overflow-hidden rounded-lg border border-[#c9ddd8] bg-[#dff2ed] md:min-h-[330px]"
+      className="relative overflow-hidden rounded-lg border border-[#c9ddd8] bg-[#dff2ed] p-3 sm:p-5"
       aria-label="Baby growth and nutrition image slider"
       aria-roledescription="carousel"
     >
-      {/* Image slider track */}
       <div
-        className="flex h-full min-h-[250px] w-full transition-transform duration-700 ease-in-out md:min-h-[330px]"
+        className="flex transition-transform duration-700 ease-in-out"
         style={{
-          transform: `translateX(-${currentSlide * 100}%)`,
+          width: `${(slides.length / visibleSlides) * 100}%`,
+          transform: `translateX(-${currentSlide * (100 / slides.length)}%)`,
         }}
       >
         {slides.map((slide, index) => (
           <div
             key={slide.alt}
-            className="relative min-h-[250px] w-full shrink-0 md:min-h-[330px]"
+            className="relative aspect-[5/4] shrink-0 px-1"
+            style={{ width: `${100 / slides.length}%` }}
             role="group"
             aria-roledescription="slide"
             aria-label={`${index + 1} of ${slides.length}`}
@@ -272,8 +342,7 @@ function HeroVisual() {
             <img
               src={slide.image}
               alt={slide.alt}
-              className={`absolute inset-0 h-full w-full ${index === 2 ? "object-contain" : "object-cover"
-                }`}
+              className={`h-full w-full rounded-lg border border-[#c9ddd8] bg-white object-contain p-2 shadow-sm`}
             />
 
             {/* Soft overlay to match the StunTrack design */}
@@ -282,23 +351,21 @@ function HeroVisual() {
         ))}
       </div>
 
-      {/* Nutrition badge */}
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-full border border-[#ecd481] bg-[#fff8df]/95 px-3 py-2 text-xs font-extrabold uppercase text-[#866313] shadow-[0_10px_24px_rgba(36,49,58,0.1)] sm:right-6 sm:top-6 sm:text-sm">
-        <Apple size={18} />
+      <div className="absolute right-1 top-1 z-10 flex items-center gap-1.5 rounded-full border border-[#ecd481] bg-[#fff8df]/95 px-2.5 py-1.5 text-[10px] font-extrabold uppercase text-[#866313] shadow-[0_10px_24px_rgba(36,49,58,0.1)] sm:right-3 sm:top-3 sm:text-xs">
+        <Apple size={15} />
         Preview Aplikasi
       </div>
 
-      {/* Slide indicators */}
       <div
         className="absolute bottom-4 right-4 z-10 flex items-center gap-2 sm:bottom-6 sm:right-6"
         aria-label="Slide indicators"
       >
-        {slides.map((slide, index) => (
+        {Array.from({ length: slideCount }, (_, index) => (
           <button
-            key={slide.alt}
+            key={index}
             type="button"
             onClick={() => setCurrentSlide(index)}
-            aria-label={`Show slide ${index + 1}`}
+            aria-label={`Show slide group ${index + 1}`}
             aria-pressed={currentSlide === index}
             className={`h-2.5 rounded-full border border-white/80 transition-all duration-300 ${currentSlide === index
               ? "w-7 bg-[#168679]"
@@ -309,6 +376,35 @@ function HeroVisual() {
       </div>
     </div>
   );
+}
+
+function IndonesiaMap() {
+  const [points, setPoints] = useState<MapPoint[]>([]);
+
+  useEffect(() => {
+    fetch(apiUrl("/api/public/map-summary"), { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : [])
+      .then((data: MapPoint[]) => setPoints(Array.isArray(data) ? data : []))
+      .catch(() => setPoints([]));
+  }, []);
+
+  function pointPosition(point: MapPoint): [number, number] {
+    if (point.latitude !== null && point.longitude !== null) return [point.latitude, point.longitude];
+    if (cityCenters[point.city_code]) return cityCenters[point.city_code];
+    const provinceCode = point.region_code.slice(0, 2);
+    return provinceCenters[provinceCode] || mapCenter;
+  }
+
+  function countIcon(total: number) {
+    const size = total > 99 ? 48 : total > 9 ? 42 : 36;
+    return L.divIcon({ className: "stuntrack-count-marker", html: `<span>${total}</span>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  }
+
+  return <section className="border-t border-[#ede4dc] bg-[#f7fbf8] px-6 py-8 md:px-12 md:py-10" aria-labelledby="map-title">
+    <div className="mb-5 text-center"><Eyebrow>Community Coverage</Eyebrow><h2 id="map-title" className="font-serif text-[1.58rem] font-bold uppercase text-[#303b45]">StunTrack di Indonesia</h2><p className="mx-auto mt-2 max-w-2xl text-[#607178]">Pinpoint menunjukkan jumlah dataset berdasarkan wilayah yang dipilih volunteer.</p></div>
+    <div className="overflow-hidden rounded-xl border border-[#c9ddd8] bg-white p-2 shadow-[0_15px_34px_rgba(45,68,67,0.1)]"><MapContainer center={mapCenter} zoom={4} minZoom={4} maxZoom={13} maxBounds={indonesiaBounds} maxBoundsViscosity={1} scrollWheelZoom className="h-[360px] w-full rounded-lg sm:h-[460px]"><IndonesiaMapView /><TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{points.map((point) => <Marker key={point.region_code} position={pointPosition(point)} icon={countIcon(point.total)}><Popup><strong>{point.region_name}</strong><br />{point.city_name}<br />{point.province_name}<br /><b>{point.total}</b> dataset</Popup></Marker>)}</MapContainer></div>
+    <p className="mt-3 text-center text-xs text-[#78868a]">Lokasi marker dibuat sebagai perkiraan wilayah untuk menjaga privasi.</p>
+  </section>;
 }
 
 function LandingPage() {
@@ -324,9 +420,9 @@ function LandingPage() {
         >
           <BrandLogo />
           <div className="inline-flex flex-wrap justify-end gap-x-[22px] gap-y-2.5">
-            <a className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" href="#chart">
-              Statistics
-            </a>
+            <Link className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" to="/labels">
+              Label
+            </Link>
             <Link className="inline-flex items-center font-extrabold text-[#4f6267] transition hover:text-[#1d61bc]" to="/login">
               Sign In
             </Link>
@@ -336,20 +432,20 @@ function LandingPage() {
           </div>
         </nav>
 
-        <header className="grid min-h-[440px] gap-10 bg-[#fffaf3] bg-[linear-gradient(90deg,rgba(255,255,255,0.97),rgba(255,255,255,0.72))] px-[18px] py-[18px] md:px-12 md:py-[54px_48px_48px] lg:grid-cols-[minmax(310px,0.92fr)_minmax(330px,1fr)]">
-          <div className="flex min-w-0 flex-col justify-center">
+        <header className="bg-[#fffaf3] bg-[linear-gradient(90deg,rgba(255,255,255,0.97),rgba(255,255,255,0.72))] px-[18px] py-[34px] md:px-12 md:py-[54px_48px_48px]">
+          <div className="flex min-w-0 flex-col items-center text-center">
             <Eyebrow>Baby Growth & Nutrition</Eyebrow>
             <h1 id="hero-title" className="m-0 text-[clamp(3.4rem,6.4vw,6rem)] font-black leading-[0.95] tracking-normal text-[#1d61bc]">
               StunTrack
             </h1>
-            <h2 className="mt-3.5 max-w-xl text-[clamp(1.45rem,2.6vw,2.35rem)] font-extrabold leading-[1.08] tracking-normal text-[#333d47]">
+            <h2 className="mt-3.5 max-w-3xl text-[clamp(1.45rem,2.6vw,2.35rem)] font-extrabold leading-[1.08] tracking-normal text-[#333d47]">
               Pahami gizi anak, ukur tumbuh kembangnya.
             </h2>
-            <p className="mt-3.5 max-w-xl text-[1.08rem] leading-normal text-[#263744]">
+            <p className="mt-3.5 max-w-3xl text-[1.08rem] leading-normal text-[#263744]">
               Portal modern bagi keluarga, relawan, dan admin untuk memahami risiko stunting, menyiapkan catatan gizi, serta mendukung pemeriksaan foto bayi berbantuan AI di masa mendatang.
             </p>
 
-            <nav className="mt-6 flex flex-wrap gap-x-[34px] gap-y-3.5 " aria-label="Primary">
+            <nav className="mt-6 flex flex-wrap justify-center gap-x-[34px] gap-y-3.5" aria-label="Primary">
               <Link className={primaryActionClass} to="/login">
                 <LogIn size={21} />
                 Sign In
@@ -365,9 +461,10 @@ function LandingPage() {
             </nav>
           </div>
 
-          <HeroVisual />
+          <div className="mt-10 w-full"><HeroVisual /></div>
         </header>
 
+        <IndonesiaMap />
         <div id="chart">
           <GrowthChart />
         </div>

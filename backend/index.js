@@ -42,8 +42,15 @@ function createBlurredPhoto(filename) {
             lastError = error;
         }
     }
-
-    throw new Error(`Gagal membuat gambar blur wajah${lastError ? `: ${lastError.message}` : ''}`);
+    const diagnostic = lastError?.stderr?.toString?.() || lastError?.message || '';
+    if (/No face detected|Unable to read image/i.test(diagnostic)) {
+        const faceError = new Error('Wajah bayi belum terdeteksi. Pastikan wajah terlihat cukup jelas dan tidak terlalu kecil.');
+        faceError.code = 'FACE_NOT_DETECTED';
+        throw faceError;
+    }
+    const processingError = new Error('Gambar belum dapat diproses. Silakan coba foto lain.');
+    processingError.code = 'BLUR_PROCESSING_FAILED';
+    throw processingError;
 }
 
 async function backfillBlurredPhotos() {
@@ -157,6 +164,38 @@ app.get('/api/labels', async (req, res) => {
     }
 });
 
+app.get('/api/public/map-summary', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT LEFT(td.region_code, 4) AS region_code, COUNT(*) AS total,
+                   COALESCE(city.name, 'Kota/Kabupaten belum tersedia') AS region_name,
+                   COALESCE(city.code, LEFT(td.region_code, 4)) AS city_code,
+                   COALESCE(city.name, 'Kota/Kabupaten belum tersedia') AS city_name,
+                   COALESCE(p.name, 'Indonesia') AS province_name,
+                   COALESCE(city.latitude, p.latitude) AS latitude,
+                   COALESCE(city.longitude, p.longitude) AS longitude
+            FROM training_data td
+            LEFT JOIN regions city ON city.code = LEFT(td.region_code, 4) AND city.level = 'city'
+            LEFT JOIN regions p ON p.code = LEFT(td.region_code, 2) AND p.level = 'province'
+            WHERE td.region_code IS NOT NULL AND td.region_code <> ''
+            GROUP BY LEFT(td.region_code, 4), city.code, city.name, p.name, city.latitude, city.longitude, p.latitude, p.longitude
+            ORDER BY total DESC
+        `);
+        res.json(rows.map((row) => ({
+            region_code: row.region_code,
+            region_name: row.region_name,
+            city_code: row.city_code,
+            city_name: row.city_name,
+            province_name: row.province_name,
+            latitude: row.latitude === null ? null : Number(row.latitude),
+            longitude: row.longitude === null ? null : Number(row.longitude),
+            total: Number(row.total || 0),
+        })));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Admin - Menambah konten edukasi (CMS)
 app.post('/api/admin/contents', verifyToken, checkRole(['admin']), upload.single('image'), async (req, res) => {
     const { title, body_text } = req.body;
@@ -238,15 +277,55 @@ app.post('/api/user/scans', verifyToken, checkRole(['orang_tua']), upload.single
 app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['orang_tua']), async (req, res) => {
     try {
         const [scans] = await db.query(
-            `SELECT s.age_months, s.weight_kg, s.head_circ_cm, s.arm_circ_cm,
+            `SELECT s.id, s.age_months, s.weight_kg, s.head_circ_cm, s.arm_circ_cm,
                     s.ai_result, s.created_at
              FROM scans s
              INNER JOIN babies b ON b.id = s.baby_id
              WHERE s.baby_id = ? AND b.user_id = ?
-             ORDER BY s.age_months ASC, s.created_at ASC`,
+             ORDER BY s.id DESC, s.created_at DESC`,
             [req.params.baby_id, req.user.id]
         );
         res.json(scans); 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/regions', verifyToken, checkRole(['volunteer']), async (req, res) => {
+    try {
+        const parentCode = typeof req.query.parent_code === 'string' ? req.query.parent_code : null;
+        let [regions] = await db.query(
+            'SELECT code, name, level, parent_code FROM regions WHERE parent_code <=> ? ORDER BY name ASC',
+            [parentCode]
+        );
+
+        // Lazy-load only the branch requested by the form. This avoids storing
+        // tens of thousands of Indonesian administrative rows up front.
+        if (regions.length === 0) {
+            const remoteBase = 'https://www.emsifa.com/api-wilayah-indonesia/api';
+            const remotePath = !parentCode
+                ? 'provinces.json'
+                : parentCode.length === 2
+                    ? `regencies/${parentCode}.json`
+                    : parentCode.length === 4
+                        ? `districts/${parentCode}.json`
+                        : `villages/${parentCode}.json`;
+            const remoteResponse = await fetch(`${remoteBase}/${remotePath}`);
+            if (!remoteResponse.ok) throw new Error('Sumber data wilayah tidak dapat diakses.');
+            const remoteRegions = await remoteResponse.json();
+            const level = !parentCode ? 'province' : parentCode.length === 2 ? 'city' : parentCode.length === 4 ? 'district' : 'village';
+            for (const region of remoteRegions) {
+                await db.query(
+                    'INSERT INTO regions (code, name, level, parent_code) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), parent_code = VALUES(parent_code)',
+                    [String(region.id), region.name, level, parentCode]
+                );
+            }
+            [regions] = await db.query(
+                'SELECT code, name, level, parent_code FROM regions WHERE parent_code <=> ? ORDER BY name ASC',
+                [parentCode]
+            );
+        }
+        res.json(regions);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -257,7 +336,7 @@ app.get('/api/user/babies/:baby_id/scans', verifyToken, checkRole(['orang_tua'])
 // ==========================================
 app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), upload.single('photo'), async (req, res) => {
     // Tambahkan gender di req.body
-    const { gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, manual_label, notes } = req.body;
+    const { region_code, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, manual_label, notes } = req.body;
     const measurements = [height_cm, weight_kg, head_circ_cm, arm_circ_cm].map((value) => { if (value === undefined || value === null || String(value).trim() === '') return null; const number = Number(value); return Number.isFinite(number) && number >= 0 ? number : null; });
     const photo_url = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -267,15 +346,19 @@ app.post('/api/volunteer/training', verifyToken, checkRole(['volunteer']), uploa
         const blurred = createBlurredPhoto(req.file.filename);
         await db.query(
             // Tambahkan gender ke query INSERT
-            'INSERT INTO training_data (volunteer_id, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, photo_url, blurred_photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [req.user.id, gender, ...measurements, photo_url, `/guest-uploads/${blurred.filename}`, manual_label, notes]
+            'INSERT INTO training_data (volunteer_id, region_code, gender, height_cm, weight_kg, head_circ_cm, arm_circ_cm, photo_url, blurred_photo_url, manual_label, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, region_code || null, gender, ...measurements, photo_url, `/guest-uploads/${blurred.filename}`, manual_label, notes]
         );
         res.status(201).json({ message: 'Data training berhasil disubmit' });
     } catch (err) {
         if (req.file?.filename) {
             try { fs.unlinkSync(path.join(uploadsDirectory, req.file.filename)); } catch { /* cleanup best effort */ }
         }
-        res.status(500).json({ error: err.message });
+        if (err.code === 'FACE_NOT_DETECTED') {
+            return res.status(422).json({ code: err.code, error: err.message });
+        }
+        console.error('Training data upload gagal:', err.message);
+        res.status(500).json({ code: 'UPLOAD_FAILED', error: 'Foto belum dapat diproses. Silakan coba lagi.' });
     }
 });
 
@@ -342,7 +425,18 @@ app.get('/api/volunteer/training/history', verifyToken, checkRole(['volunteer'])
     try {
         // req.user.id didapat otomatis dari token jwt saat volunteer login
         const [data] = await db.query(
-            'SELECT * FROM training_data WHERE volunteer_id = ? ORDER BY created_at DESC',
+            `SELECT td.*,
+                    village.name AS village_name,
+                    district.name AS district_name,
+                    city.name AS city_name,
+                    province.name AS province_name
+             FROM training_data td
+             LEFT JOIN regions village ON village.code = td.region_code AND village.level = 'village'
+             LEFT JOIN regions district ON district.code = village.parent_code AND district.level = 'district'
+             LEFT JOIN regions city ON city.code = district.parent_code AND city.level = 'city'
+             LEFT JOIN regions province ON province.code = city.parent_code AND province.level = 'province'
+             WHERE td.volunteer_id = ?
+             ORDER BY td.created_at DESC, td.id DESC`,
             [req.user.id] 
         );
         res.json(data);
@@ -425,7 +519,18 @@ app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, re
 
         const whereClause = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
         const [data] = await db.query(
-            `SELECT td.*, u.name AS volunteer_name FROM training_data td LEFT JOIN users u ON u.id = td.volunteer_id${whereClause} ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
+            `SELECT td.*, u.name AS volunteer_name,
+                    village.name AS village_name,
+                    district.name AS district_name,
+                    city.name AS city_name,
+                    province.name AS province_name
+             FROM training_data td
+             LEFT JOIN users u ON u.id = td.volunteer_id
+             LEFT JOIN regions village ON village.code = td.region_code AND village.level = 'village'
+             LEFT JOIN regions district ON district.code = village.parent_code AND district.level = 'district'
+             LEFT JOIN regions city ON city.code = district.parent_code AND city.level = 'city'
+             LEFT JOIN regions province ON province.code = city.parent_code AND province.level = 'province'${whereClause}
+             ORDER BY td.created_at ASC, td.id ASC LIMIT ? OFFSET ?`,
             [...values, limit, offset]
         );
         const [[countRow]] = await db.query(`SELECT COUNT(*) AS total FROM training_data td${whereClause}`, values);

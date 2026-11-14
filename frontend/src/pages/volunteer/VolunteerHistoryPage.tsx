@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, AlertCircle, ImageIcon, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiUrl, protectedMediaUrl } from "../lib/api";
+import { apiUrl, protectedMediaUrl } from "../../lib/api";
 
 interface TrainingData {
   id: number;
@@ -12,6 +12,10 @@ interface TrainingData {
   photo_url: string;
   manual_label: string;
   notes: string;
+  province_name: string | null;
+  city_name: string | null;
+  district_name: string | null;
+  village_name: string | null;
   created_at: string;
 }
 
@@ -235,6 +239,24 @@ export default function VolunteerHistoryPage() {
                 <div>
                   <p className="text-xs text-white/50">LiLA</p>
                   <p className="mt-1 font-semibold">{data[selectedImageIndex].arm_circ_cm ?? "–"} cm</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 rounded-lg border border-white/10 bg-black/20 p-3 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-white/50">Provinsi</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].province_name || "–"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Kota</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].city_name || "–"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Kecamatan</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].district_name || "–"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-white/50">Kelurahan/Desa</p>
+                  <p className="mt-1 font-semibold">{data[selectedImageIndex].village_name || "–"}</p>
                 </div>
               </div>
               <p className="mt-3 text-xs text-white/50">

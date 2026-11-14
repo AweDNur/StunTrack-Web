@@ -3,7 +3,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 try:
     import mediapipe as mp
@@ -19,7 +19,7 @@ def main() -> int:
     input_path = Path(sys.argv[1])
     output_path = Path(sys.argv[2])
     try:
-        rgb_image = np.array(Image.open(input_path).convert("RGB"))
+        rgb_image = np.array(ImageOps.exif_transpose(Image.open(input_path)).convert("RGB"))
         image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
     except Exception:
         print(f"Unable to read image: {input_path}", file=sys.stderr)
@@ -35,13 +35,13 @@ def main() -> int:
             options = mp.tasks.vision.FaceDetectorOptions(
                 base_options=base_options,
                 running_mode=mp.tasks.vision.RunningMode.IMAGE,
-                min_detection_confidence=0.7,
+                min_detection_confidence=0.35,
             )
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
             with mp.tasks.vision.FaceDetector.create_from_options(options) as face_detector:
                 detections = face_detector.detect(mp_image).detections
             for detection in detections:
-                if not detection.categories or detection.categories[0].score < 0.75:
+                if not detection.categories or detection.categories[0].score < 0.40:
                     continue
                 box = detection.bounding_box
                 faces.append((box.origin_x, box.origin_y, box.width, box.height))
@@ -50,9 +50,46 @@ def main() -> int:
 
     if not faces:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        cascade_path = str(local_model if local_model.exists() else Path(cv2.data.haarcascades) / "haarcascade_frontalface_default.xml")
-        detector = cv2.CascadeClassifier(cascade_path)
-        faces = detector.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=5, minSize=(30, 30))
+        gray = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8)).apply(gray)
+        cascade_directory = Path(cv2.data.haarcascades)
+        frontal_path = local_model if local_model.exists() else cascade_directory / "haarcascade_frontalface_default.xml"
+        profile_path = cascade_directory / "haarcascade_profileface.xml"
+
+        def detect_with_cascade(cascade_file: Path, source: np.ndarray, scale=1.0):
+            detector = cv2.CascadeClassifier(str(cascade_file))
+            if detector.empty():
+                return []
+            found = detector.detectMultiScale(source, scaleFactor=1.05, minNeighbors=3, minSize=(24, 24))
+            return [(int(x / scale), int(y / scale), int(width / scale), int(height / scale)) for x, y, width, height in found]
+
+        # Try the original image and enlarged versions because a baby's face
+        # can occupy only a small part of a portrait photo.
+        for scale in (1.0, 1.5, 2.0, 3.0):
+            enlarged = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC) if scale != 1.0 else gray
+            faces.extend(detect_with_cascade(frontal_path, enlarged, scale))
+            if not faces:
+                faces.extend(detect_with_cascade(profile_path, enlarged, scale))
+            if faces:
+                break
+
+        # A small rotation pass helps with photos where the baby's head is
+        # tilted. Coordinates are mapped back to the original image.
+        if not faces:
+            height, width = gray.shape[:2]
+            center = (width // 2, height // 2)
+            for angle in (-12, 12):
+                matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+                rotated = cv2.warpAffine(gray, matrix, (width, height), borderMode=cv2.BORDER_REPLICATE)
+                rotated_faces = detect_with_cascade(frontal_path, rotated)
+                inverse = cv2.invertAffineTransform(matrix)
+                for x, y, box_width, box_height in rotated_faces:
+                    corners = np.array([[x, y], [x + box_width, y + box_height]], dtype=np.float32).reshape(-1, 1, 2)
+                    mapped = cv2.transform(corners, inverse).reshape(-1, 2)
+                    left, top = np.min(mapped, axis=0).astype(int)
+                    right, bottom = np.max(mapped, axis=0).astype(int)
+                    faces.append((left, top, right - left, bottom - top))
+                if faces:
+                    break
 
     if len(faces) == 0:
         print("No face detected; refusing to create an unblurred guest image", file=sys.stderr)

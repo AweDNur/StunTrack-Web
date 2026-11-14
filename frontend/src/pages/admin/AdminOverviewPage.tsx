@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BarChart3, ClipboardList, Database, Image as ImageIcon, Loader2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
 
 type Dataset = { id: number; gender: "L" | "P"; manual_label: string; created_at: string; volunteer_name?: string | null };
 type ResponseData = { data: Dataset[]; total: number; categories: Array<{ gender: "L" | "P"; label: string; count: number }> };

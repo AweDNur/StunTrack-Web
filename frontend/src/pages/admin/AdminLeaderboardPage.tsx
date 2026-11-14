@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronRight, Database, Loader2, Medal, Trophy, Users, X } from "lucide-react";
-import { apiUrl, protectedMediaUrl } from "../lib/api";
+import { apiUrl, protectedMediaUrl } from "../../lib/api";
 
 type Leader = { rank: number; id: number; name: string; email: string; contribution_count: number; latest_contribution: string | null };
 type Dataset = { id: number; gender: "L" | "P"; manual_label: string; photo_url: string; created_at: string; height_cm: number | null; weight_kg: number | null; head_circ_cm: number | null; arm_circ_cm: number | null };

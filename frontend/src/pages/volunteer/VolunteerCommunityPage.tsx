@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Crown, Loader2, Medal, Trophy, Users } from "lucide-react";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
 
 type Leader = { rank: number; id: number; name: string; contribution_count: number };
 type LeaderboardResponse = { leaderboard: Leader[]; current_rank: number | null; current_contribution_count: number };

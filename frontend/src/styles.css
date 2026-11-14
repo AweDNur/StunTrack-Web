@@ -128,3 +128,30 @@
   max-height: 100dvh !important;
   overflow: hidden !important;
 }
+
+.stuntrack-map-marker {
+  display: grid;
+  place-items: center;
+}
+
+.stuntrack-map-marker span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid white;
+  border-radius: 999px;
+  background: #1c5fbd;
+  box-shadow: 0 2px 8px rgba(28, 95, 189, 0.45);
+}
+
+.stuntrack-count-marker {
+  display: grid;
+  place-items: center;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background: #1c5fbd;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 3px 12px rgba(28, 95, 189, 0.4);
+}

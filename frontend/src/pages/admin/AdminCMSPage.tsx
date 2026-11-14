@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, FileText, Loader2, Save } from "lucide-react";
-import RichTextEditor from "../components/RichTextEditor";
-import { apiUrl } from "../lib/api";
+import RichTextEditor from "../../components/RichTextEditor";
+import { apiUrl } from "../../lib/api";
 
 type SectionKey = "main" | "theSite" | "story" | "credits" | "people" | "papers" | "press";
 type AboutSections = Record<SectionKey, string>;

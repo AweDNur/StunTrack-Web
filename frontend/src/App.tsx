@@ -3,18 +3,18 @@ import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
-import DetectionPage from "./pages/DetectionPage";
-import TrainingDataPage from "./pages/TrainingDataPage";
-import AdminTrainingDataPage from "./pages/AdminTrainingDataPage";
-import AdminCMSPage from "./pages/AdminCMSPage";
-import VolunteerHistoryPage from "./pages/VolunteerHistoryPage";
-import OverviewPage from "./pages/OverviewPage";
-import ChildGrowthPage from "./pages/ChildGrowthPage";
+import DetectionPage from "./pages/orang_tua/DetectionPage";
+import TrainingDataPage from "./pages/volunteer/TrainingDataPage";
+import AdminTrainingDataPage from "./pages/admin/AdminTrainingDataPage";
+import AdminCMSPage from "./pages/admin/AdminCMSPage";
+import VolunteerHistoryPage from "./pages/volunteer/VolunteerHistoryPage";
+import OverviewPage from "./pages/orang_tua/OverviewPage";
+import ChildGrowthPage from "./pages/orang_tua/ChildGrowthPage";
 import AboutPage from "./pages/AboutPage";
 import LabelPage from "./pages/LabelPage";
 import RoleOverviewPage from "./pages/RoleOverviewPage";
-import VolunteerCommunityPage from "./pages/VolunteerCommunityPage";
-import AdminLeaderboardPage from "./pages/AdminLeaderboardPage";
+import VolunteerCommunityPage from "./pages/volunteer/VolunteerCommunityPage";
+import AdminLeaderboardPage from "./pages/admin/AdminLeaderboardPage";
 
 function App() {
   return (

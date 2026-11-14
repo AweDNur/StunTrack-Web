@@ -1,7 +1,7 @@
 import { Navigate, useParams } from "react-router-dom";
-import AdminOverviewPage from "./AdminOverviewPage";
-import VolunteerOverviewPage from "./VolunteerOverviewPage";
-import OverviewPage from "./OverviewPage";
+import AdminOverviewPage from "./admin/AdminOverviewPage";
+import VolunteerOverviewPage from "./volunteer/VolunteerOverviewPage";
+import OverviewPage from "./orang_tua/OverviewPage";
 
 export default function RoleOverviewPage() {
   const { role } = useParams();

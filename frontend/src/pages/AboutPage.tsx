@@ -48,7 +48,7 @@ export default function AboutPage() {
     <main className="min-h-screen bg-[#f3efea] bg-[linear-gradient(135deg,rgba(18,132,122,0.12),transparent_34%),linear-gradient(315deg,rgba(219,94,68,0.13),transparent_31%)] px-3 py-3 text-[#24313a] sm:px-5 sm:py-7 sm:pb-14">
       <section className="mx-auto w-full max-w-[900px] overflow-hidden rounded-lg border border-[#d7d0c9] bg-[#fffdf9] shadow-[0_18px_60px_rgba(70,53,39,0.13)]">
         <nav className="flex items-center justify-between border-b border-[#e7dfd7] bg-white/75 px-5 py-4 md:px-7">
-          <div className="flex items-center gap-3"><Link to="/" className="flex items-center gap-3 text-[#1d61bc]"><img className="h-10 w-10 object-contain" src={logo} alt="StunTrack Logo" /><strong className="text-xl font-black">StunTrack</strong></Link><Link to="/labels" className="ml-2 rounded-lg border border-[#b4ccef] bg-[#eaf2ff] px-5 py-2.5 text-base font-black text-[#1c5fbd] shadow-[0_3px_0_#9db9e8]">Label</Link></div>
+          <div className="flex items-center gap-3"><Link to="/" className="flex items-center gap-3 text-[#1d61bc]"><img className="h-10 w-10 object-contain" src={logo} alt="StunTrack Logo" /><strong className="text-xl font-black">StunTrack</strong></Link></div>
           <Link to="/" className="inline-flex items-center gap-2 font-extrabold text-[#4f6267] hover:text-[#1d61bc]"><ArrowLeft size={18} /> Kembali ke Beranda</Link>
         </nav>
 

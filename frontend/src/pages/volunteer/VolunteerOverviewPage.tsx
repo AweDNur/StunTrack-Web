@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, CheckCircle2, ClipboardList, Database, Loader2, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
 
 type TrainingData = { id: number; gender: "L" | "P"; manual_label: string; created_at: string; height_cm: number | null; weight_kg: number | null };
 const formatDate = (value: string) => new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));

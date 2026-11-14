@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDownUp, Baby, LineChart as LineChartIcon, TrendingUp } from "lucide-react";
 import { Brush, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
 
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
 type Scan = { age_months: number; weight_kg: number; head_circ_cm: number; arm_circ_cm: number; ai_result: string; created_at: string };

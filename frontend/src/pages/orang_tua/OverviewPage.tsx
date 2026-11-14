@@ -1,16 +1,30 @@
 import { useEffect, useState } from "react";
 import { Baby, ChevronRight, ClipboardPlus, Frown, Smile, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
 
 type BabyProfile = { id: number; name: string; gender: string; birth_date: string };
-type Scan = { ai_result: unknown; created_at: string; age_months: number; weight_kg?: number; head_circ_cm?: number; arm_circ_cm?: number };
+type Scan = { id: number; ai_result: unknown; created_at: string; age_months: number; weight_kg?: number; head_circ_cm?: number; arm_circ_cm?: number };
 type Session = { token?: string };
-type AiResult = { prediction?: string; is_stunting?: boolean; confidence?: number; proba_stunting?: number; proba_tidak_stunting?: number };
+type AiResult = { prediction?: string; model_read?: string; is_stunting?: boolean; confidence?: number; proba_stunting?: number; proba_tidak_stunting?: number };
+
+function normalizeAiResult(value: AiResult): AiResult {
+  const numeric = (input: unknown) => {
+    const number = typeof input === "number" ? input : Number(input);
+    return Number.isFinite(number) ? number : undefined;
+  };
+  return {
+    ...value,
+    prediction: value.prediction || value.model_read,
+    confidence: numeric(value.confidence),
+    proba_stunting: numeric(value.proba_stunting),
+    proba_tidak_stunting: numeric(value.proba_tidak_stunting),
+  };
+}
 
 function parseAiResult(value: unknown): AiResult {
   if (!value) return {};
-  if (typeof value === "object") return value as AiResult;
+  if (typeof value === "object") return normalizeAiResult(value as AiResult);
 
   const text = String(value).trim();
   const candidates = [
@@ -20,12 +34,14 @@ function parseAiResult(value: unknown): AiResult {
   ];
 
   for (const candidate of candidates) {
-    try { return JSON.parse(candidate) as AiResult; } catch { /* Try the next representation. */ }
+    try { return normalizeAiResult(JSON.parse(candidate) as AiResult); } catch { /* Try the next representation. */ }
   }
 
-  const prediction = text.match(/"?prediction"?\s*:\s*"([^"]+)"/i)?.[1];
+  const prediction = text.match(/"?(?:prediction|model_read)"?\s*:\s*"([^"]+)"/i)?.[1];
   const isStunting = text.match(/"?is_stunting"?\s*:\s*(true|false)/i)?.[1];
-  return { prediction: prediction || text, is_stunting: isStunting ? isStunting.toLowerCase() === "true" : text.toLowerCase() === "stunting" };
+  const numberValue = (key: string) => { const match = text.match(new RegExp(`"?${key}"?\\s*:\\s*(-?\\d+(?:\\.\\d+)?)`, "i")); return match ? Number(match[1]) : undefined; };
+  const concern = isStunting ? isStunting.toLowerCase() === "true" : text.toLowerCase().includes("stunting");
+  return normalizeAiResult({ prediction: prediction || (isStunting ? (concern ? "Stunting" : "Tidak stunting") : text), is_stunting: concern, confidence: numberValue("confidence"), proba_stunting: numberValue("proba_stunting"), proba_tidak_stunting: numberValue("proba_tidak_stunting") });
 }
 
 function formatDate(value: string) {
@@ -42,19 +58,19 @@ function OverviewPage() {
   useEffect(() => {
     if (!session?.token) return;
     const headers = { Authorization: `Bearer ${session.token}` };
-    fetch(apiUrl("/api/user/babies"), { headers })
+    fetch(apiUrl("/api/user/babies"), { headers, cache: "no-store" })
       .then((response) => response.json())
       .then(async (profiles: BabyProfile[]) => {
         setBabies(profiles);
         const scans = await Promise.all(profiles.map(async (baby) => {
-          const response = await fetch(apiUrl(`/api/user/babies/${baby.id}/scans`), { headers });
+          const response = await fetch(apiUrl(`/api/user/babies/${baby.id}/scans`), { headers, cache: "no-store" });
           const data = (await response.json().catch(() => [])) as Scan[];
-          const latestScan = [...data].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at))[0];
+          const latestScan = [...data].sort((left, right) => right.id - left.id || Date.parse(right.created_at) - Date.parse(left.created_at))[0];
           return latestScan ? { baby, scan: latestScan } : null;
         }));
         const withScans = scans.filter((item): item is { baby: BabyProfile; scan: Scan } => item !== null);
         setLatestScans([...withScans].sort((left, right) => left.baby.name.localeCompare(right.baby.name)));
-        setLatest([...withScans].sort((left, right) => Date.parse(right.scan.created_at) - Date.parse(left.scan.created_at))[0] || null);
+        setLatest([...withScans].sort((left, right) => right.scan.id - left.scan.id || Date.parse(right.scan.created_at) - Date.parse(left.scan.created_at))[0] || null);
       })
       .finally(() => setIsLoading(false));
   }, [session?.token]);

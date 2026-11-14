@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Upload, CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
-import { apiUrl } from "../lib/api";
+import { apiUrl } from "../../lib/api";
+
+type Region = { code: string; name: string; level: "province" | "city" | "district" | "village"; parent_code: string | null };
 
 export default function TrainingDataPage() {
   const [photo, setPhoto] = useState<File | null>(null);
@@ -12,8 +14,30 @@ export default function TrainingDataPage() {
   const [armCircCm, setArmCircCm] = useState<string>("");
   const [manualLabel, setManualLabel] = useState<string>("Stunting");
   const [notes, setNotes] = useState<string>("");
+  const [provinces, setProvinces] = useState<Region[]>([]);
+  const [cities, setCities] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<Region[]>([]);
+  const [villages, setVillages] = useState<Region[]>([]);
+  const [provinceCode, setProvinceCode] = useState("");
+  const [cityCode, setCityCode] = useState("");
+  const [districtCode, setDistrictCode] = useState("");
+  const [villageCode, setVillageCode] = useState("");
   const [loading, setLoading] = useState<boolean>(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
+    fetch(apiUrl("/api/regions"), { headers: { Authorization: `Bearer ${session.token}` } })
+      .then((response) => response.json())
+      .then((data: Region[]) => setProvinces(Array.isArray(data) ? data : []));
+  }, []);
+
+  async function loadRegions(parentCode: string, setter: React.Dispatch<React.SetStateAction<Region[]>>) {
+    const session = JSON.parse(localStorage.getItem("stuntrack_session") || "{}");
+    const response = await fetch(`${apiUrl("/api/regions")}?parent_code=${encodeURIComponent(parentCode)}`, { headers: { Authorization: `Bearer ${session.token}` } });
+    const data = (await response.json()) as Region[];
+    setter(Array.isArray(data) ? data : []);
+  }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
@@ -38,6 +62,7 @@ export default function TrainingDataPage() {
     formData.append("weight_kg", weightKg);
     formData.append("head_circ_cm", headCircCm);
     formData.append("arm_circ_cm", armCircCm);
+    formData.append("region_code", villageCode);
     formData.append("manual_label", manualLabel);
     formData.append("notes", notes);
 
@@ -58,8 +83,19 @@ export default function TrainingDataPage() {
       setHeadCircCm("");
       setArmCircCm("");
       setNotes("");
+      setProvinceCode("");
+      setCityCode("");
+      setDistrictCode("");
+      setVillageCode("");
+      setCities([]);
+      setDistricts([]);
+      setVillages([]);
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Terjadi kesalahan server" });
+      const rawMessage = String(err?.message || "");
+      const cleanMessage = /No face detected|Command failed|Gagal membuat gambar blur|FACE_NOT_DETECTED/i.test(rawMessage)
+        ? "Wajah bayi belum terdeteksi. Pastikan wajah terlihat cukup jelas dan tidak terlalu kecil."
+        : rawMessage || "Foto belum dapat diproses. Silakan coba lagi.";
+      setMessage({ type: "error", text: cleanMessage });
     } finally {
       setLoading(false);
     }
@@ -124,6 +160,16 @@ export default function TrainingDataPage() {
                 <option value="Kurang Nutrisi">Kurang Nutrisi</option>
                 <option value="Normal">Normal</option>
               </select>
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-3"><h3 className="text-sm font-bold text-[#303b45]">Asal Wilayah Dataset</h3><p className="mt-1 text-xs text-[#71838d]">Pilih lokasi secara bertingkat sampai kelurahan/desa.</p></div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <select required value={provinceCode} onChange={(event) => { const value = event.target.value; setProvinceCode(value); setCityCode(""); setDistrictCode(""); setVillageCode(""); setDistricts([]); setVillages([]); setCities([]); if (value) void loadRegions(value, setCities); }} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] focus:border-[#1c5fbd] focus:outline-none"><option value="">Pilih provinsi</option>{provinces.map((region) => <option value={region.code} key={region.code}>{region.name}</option>)}</select>
+              <select required disabled={!provinceCode} value={cityCode} onChange={(event) => { const value = event.target.value; setCityCode(value); setDistrictCode(""); setVillageCode(""); setVillages([]); setDistricts([]); if (value) void loadRegions(value, setDistricts); }} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] disabled:bg-[#f5f8fc] focus:border-[#1c5fbd] focus:outline-none"><option value="">Pilih kota/kabupaten</option>{cities.map((region) => <option value={region.code} key={region.code}>{region.name}</option>)}</select>
+              <select required disabled={!cityCode} value={districtCode} onChange={(event) => { const value = event.target.value; setDistrictCode(value); setVillageCode(""); setVillages([]); setDistricts((current) => current); if (value) void loadRegions(value, setVillages); }} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] disabled:bg-[#f5f8fc] focus:border-[#1c5fbd] focus:outline-none"><option value="">Pilih kecamatan</option>{districts.map((region) => <option value={region.code} key={region.code}>{region.name}</option>)}</select>
+              <select required disabled={!districtCode} value={villageCode} onChange={(event) => setVillageCode(event.target.value)} className="w-full rounded-xl border border-[#d1dbe5] bg-white px-4 py-3 text-sm font-semibold text-[#303b45] disabled:bg-[#f5f8fc] focus:border-[#1c5fbd] focus:outline-none"><option value="">Pilih kelurahan/desa</option>{villages.map((region) => <option value={region.code} key={region.code}>{region.name}</option>)}</select>
             </div>
           </div>
 
