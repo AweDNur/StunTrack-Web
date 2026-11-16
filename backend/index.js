@@ -492,6 +492,102 @@ app.get('/api/admin/leaderboard', verifyToken, checkRole(['admin']), async (req,
     }
 });
 
+// Admin - Ringkasan akun orang tua dan histori scan bayi
+app.get('/api/admin/parents', verifyToken, checkRole(['admin']), async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT
+                u.id AS parent_id,
+                u.name AS parent_name,
+                u.email AS parent_email,
+                b.id AS baby_id,
+                b.name AS baby_name,
+                b.gender AS baby_gender,
+                b.birth_date,
+                s.id AS scan_id,
+                s.age_months,
+                s.weight_kg,
+                s.head_circ_cm,
+                s.arm_circ_cm,
+                s.ai_result,
+                s.created_at AS scan_created_at
+            FROM users u
+            LEFT JOIN babies b ON b.user_id = u.id
+            LEFT JOIN scans s ON s.baby_id = b.id
+            WHERE u.role = 'orang_tua'
+            ORDER BY u.name ASC, b.name ASC, s.created_at DESC, s.id DESC
+        `);
+
+        const parentsById = new Map();
+        let stuntingScans = 0;
+        let totalScans = 0;
+
+        const getIsStunting = (value) => {
+            if (value === null || value === undefined || value === '') return false;
+            try {
+                const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+                if (parsed && typeof parsed.is_stunting === 'boolean') return parsed.is_stunting;
+            } catch {
+                // ai_result lama dapat berupa teks biasa.
+            }
+            const text = String(value).toLowerCase();
+            return text.includes('stunting') && !text.includes('tidak stunting') && !text.includes('not stunting');
+        };
+
+        for (const row of rows) {
+            if (!parentsById.has(row.parent_id)) {
+                parentsById.set(row.parent_id, {
+                    id: row.parent_id,
+                    name: row.parent_name,
+                    email: row.parent_email,
+                    children: [],
+                });
+            }
+            const parent = parentsById.get(row.parent_id);
+            if (row.baby_id === null) continue;
+
+            let child = parent.children.find((item) => item.id === row.baby_id);
+            if (!child) {
+                child = {
+                    id: row.baby_id,
+                    name: row.baby_name,
+                    gender: row.baby_gender,
+                    birth_date: row.birth_date,
+                    scans: [],
+                };
+                parent.children.push(child);
+            }
+
+            if (row.scan_id !== null) {
+                const isStunting = getIsStunting(row.ai_result);
+                child.scans.push({
+                    id: row.scan_id,
+                    age_months: row.age_months,
+                    weight_kg: row.weight_kg,
+                    head_circ_cm: row.head_circ_cm,
+                    arm_circ_cm: row.arm_circ_cm,
+                    ai_result: row.ai_result,
+                    is_stunting: isStunting,
+                    created_at: row.scan_created_at,
+                });
+                totalScans += 1;
+                if (isStunting) stuntingScans += 1;
+            }
+        }
+
+        res.json({
+            summary: {
+                parents: parentsById.size,
+                stunting: stuntingScans,
+                not_stunting: totalScans - stuntingScans,
+            },
+            parents: Array.from(parentsById.values()),
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/admin/training', verifyToken, checkRole(['admin']), async (req, res) => {
     try {
         const gender = typeof req.query.gender === 'string' ? req.query.gender : '';

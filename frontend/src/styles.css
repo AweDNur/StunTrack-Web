@@ -54,6 +54,16 @@
   line-height: 1.25 !important;
 }
 
+[data-rich-editor] .rich-text-content .tiptap > p,
+.about-rich-preview p {
+  margin: 0.65rem 0;
+}
+
+[data-rich-editor] .rich-text-content .tiptap > p:first-child,
+.about-rich-preview > p:first-child {
+  margin-top: 0;
+}
+
 [data-rich-editor] .rich-text-content .tiptap > blockquote {
   margin: 0.75rem 0 !important;
   border-left: 4px solid #1c5fbd !important;
@@ -154,4 +164,30 @@
   font-size: 12px;
   font-weight: 900;
   box-shadow: 0 3px 12px rgba(28, 95, 189, 0.4);
+}
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+.toast-enter {
+  animation: toast-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast-exit {
+  animation: toast-exit 0.5s cubic-bezier(0.55, 0, 0.78, 0.22) both;
+}
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(120%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toast-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(120%); }
+}
+
+.toast-progress {
+  animation: toast-progress 4.2s linear forwards;
 }

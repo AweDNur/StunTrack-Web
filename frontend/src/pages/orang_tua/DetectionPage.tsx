@@ -1,5 +1,5 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { Activity, AlertCircle, Baby, CheckCircle2, ImagePlus, Info, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
+import { Activity, AlertCircle, Baby, Check, CheckCircle2, ImagePlus, Info, RotateCcw, Save, Sparkles, Upload, X } from "lucide-react";
 import { aiApiUrl, apiUrl } from "../../lib/api";
 
 type Session = { token?: string; role?: "orang_tua" | "volunteer" | "admin"; name?: string };
@@ -22,6 +22,17 @@ function todayInputValue() {
   return `${today.getFullYear()}-${month}-${day}`;
 }
 
+function measurementLimitError(form: FormData) {
+  const limits = [
+    ["usia_bulan", "Usia", 60, "bulan"],
+    ["bb_kg", "Berat badan", 35, "kg"],
+    ["lk_cm", "Lingkar kepala", 60, "cm"],
+    ["ll_cm", "Lingkar lengan atas (LiLA)", 30, "cm"],
+  ] as const;
+  const invalidLimit = limits.find(([field, , maximum]) => Number(form.get(field)) > maximum);
+  return invalidLimit ? `${invalidLimit[1]} maksimal ${invalidLimit[2]} ${invalidLimit[3]}.` : "";
+}
+
 function DetectionPage() {
   const session = JSON.parse(localStorage.getItem("stuntrack_session") || "null") as Session | null;
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,9 +47,32 @@ function DetectionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-  const [saveMessage, setSaveMessage] = useState("");
   const [prediction, setPrediction] = useState<Prediction | null>(null);
+  const [toast, setToast] = useState({ visible: false, leaving: false, message: "" });
+  const toastTimers = useRef<number[]>([]);
   const today = todayInputValue();
+
+  function clearToastTimers() {
+    toastTimers.current.forEach((timer) => window.clearTimeout(timer));
+    toastTimers.current = [];
+  }
+
+  function showSuccessToast(message: string) {
+    clearToastTimers();
+    setToast({ visible: true, leaving: false, message });
+    toastTimers.current = [
+      window.setTimeout(() => setToast((current) => ({ ...current, leaving: true })), 4200),
+      window.setTimeout(() => setToast({ visible: false, leaving: false, message: "" }), 4700),
+    ];
+  }
+
+  function dismissToast() {
+    clearToastTimers();
+    setToast((current) => ({ ...current, leaving: true }));
+    toastTimers.current = [window.setTimeout(() => setToast({ visible: false, leaving: false, message: "" }), 500)];
+  }
+
+  useEffect(() => () => clearToastTimers(), []);
 
   useEffect(() => {
     fetch(aiApiUrl("/status"))
@@ -92,13 +126,18 @@ function DetectionPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setSaveMessage("");
     setPrediction(null);
     setIsSubmitting(true);
     const form = new FormData(event.currentTarget);
     const submittedBirthDate = String(form.get("birth_date") ?? "");
     if (submittedBirthDate > today) {
       setError("Tanggal lahir tidak boleh lebih dari hari ini.");
+      setIsSubmitting(false);
+      return;
+    }
+    const limitError = measurementLimitError(form);
+    if (limitError) {
+      setError(limitError);
       setIsSubmitting(false);
       return;
     }
@@ -127,9 +166,14 @@ function DetectionPage() {
     }
 
     setError("");
-    setSaveMessage("");
     setIsSaving(true);
     const form = new FormData(formRef.current);
+    const limitError = measurementLimitError(form);
+    if (limitError) {
+      setError(limitError);
+      setIsSaving(false);
+      return;
+    }
     const selectedGender = String(form.get("jk") ?? gender);
 
     try {
@@ -171,7 +215,7 @@ function DetectionPage() {
       const scanResult = (await scanResponse.json().catch(() => ({}))) as { message?: string; error?: string };
       if (!scanResponse.ok) throw new Error(scanResult.message || scanResult.error || "Data scan gagal disimpan.");
 
-      setSaveMessage(scanResult.message || "Data bayi dan hasil scan berhasil disimpan.");
+      showSuccessToast(scanResult.message || "Data bayi dan hasil scan berhasil disimpan.");
     } catch (saveError) {
       setError(saveError instanceof TypeError ? "Tidak dapat terhubung ke backend. Pastikan backend berjalan di port 3000." : saveError instanceof Error ? saveError.message : "Data belum berhasil disimpan.");
     } finally {
@@ -187,17 +231,18 @@ function DetectionPage() {
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="baby_select">Pilih Bayi<select className={inputClass} id="baby_select" value={selectedBabyId} onChange={(event) => handleBabySelection(event.target.value)}><option value="">Bayi baru / tulis manual</option>{babies.map((baby) => <option value={baby.id} key={baby.id}>{baby.name}</option>)}</select></label>
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="baby_name">Nama Bayi<input className={inputClass} id="baby_name" name="baby_name" type="text" placeholder="Nama lengkap bayi" value={babyName} onChange={(event) => { setBabyName(event.target.value); if (selectedBabyId) setSelectedBabyId(""); }} required /></label>
               <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="birth_date">Tanggal Lahir<input className={inputClass} id="birth_date" name="birth_date" type="date" max={today} value={birthDate} onChange={(event) => { setBirthDate(event.target.value); if (selectedBabyId) setSelectedBabyId(""); }} required /></label>
-              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="usia_bulan">Usia <span className="font-normal text-[#8a9aa6]">(bulan)</span><input className={inputClass} id="usia_bulan" name="usia_bulan" type="number" placeholder="cth. 24" min="0" max="60" step="0.1" required /></label>
+              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="usia_bulan">Usia <span className="font-normal text-[#8a9aa6]">(bulan, maks. 60)</span><input className={inputClass} id="usia_bulan" name="usia_bulan" type="number" placeholder="cth. 24" min="0" max="60" step="0.1" required /></label>
               <fieldset className="grid gap-2"><legend className="text-sm font-extrabold text-[#405155]">Jenis Kelamin</legend><div className="grid gap-3 sm:grid-cols-2"><label className="cursor-pointer"><input className="peer sr-only" type="radio" name="jk" value="0" checked={gender === "0"} onChange={(event) => setGender(event.target.value)} required /><span className="flex h-12 items-center justify-center rounded-lg border border-[#cbd8df] font-bold text-[#65747b] transition peer-checked:border-[#1c5fbd] peer-checked:bg-[#eef5ff] peer-checked:text-[#1c5fbd]">♀ Perempuan</span></label><label className="cursor-pointer"><input className="peer sr-only" type="radio" name="jk" value="1" checked={gender === "1"} onChange={(event) => setGender(event.target.value)} /><span className="flex h-12 items-center justify-center rounded-lg border border-[#cbd8df] font-bold text-[#65747b] transition peer-checked:border-[#1c5fbd] peer-checked:bg-[#eef5ff] peer-checked:text-[#1c5fbd]">♂ Laki-laki</span></label></div></fieldset>
-              <div className="grid gap-5 sm:grid-cols-2"><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="bb_kg">Berat Badan <span className="font-normal text-[#8a9aa6]">(kg)</span><input className={inputClass} id="bb_kg" name="bb_kg" type="number" placeholder="cth. 12.5" min="0.1" max="30" step="0.01" required /></label><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="lk_cm">Lingkar Kepala <span className="font-normal text-[#8a9aa6]">(cm)</span><input className={inputClass} id="lk_cm" name="lk_cm" type="number" placeholder="cth. 46" min="5" max="70" step="0.1" required /></label></div>
-              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="ll_cm">Lingkar Lengan Atas <span className="font-normal text-[#8a9aa6]">(LILA, cm)</span><input className={inputClass} id="ll_cm" name="ll_cm" type="number" placeholder="cth. 14" min="3" max="40" step="0.1" required /></label>
+              <div className="grid gap-5 sm:grid-cols-2"><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="bb_kg">Berat Badan <span className="font-normal text-[#8a9aa6]">(kg, maks. 35)</span><input className={inputClass} id="bb_kg" name="bb_kg" type="number" placeholder="cth. 12.5" min="0.1" max="35" step="0.01" required /></label><label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="lk_cm">Lingkar Kepala <span className="font-normal text-[#8a9aa6]">(cm, maks. 60)</span><input className={inputClass} id="lk_cm" name="lk_cm" type="number" placeholder="cth. 46" min="5" max="60" step="0.1" required /></label></div>
+              <label className="grid gap-2 text-sm font-extrabold text-[#405155]" htmlFor="ll_cm">Lingkar Lengan Atas <span className="font-normal text-[#8a9aa6]">(LILA, maks. 30 cm)</span><input className={inputClass} id="ll_cm" name="ll_cm" type="number" placeholder="cth. 14" min="3" max="30" step="0.1" required /></label>
               <div className="grid gap-2 text-sm font-extrabold text-[#405155]"><span>Foto Anak <span className="font-normal text-[#8a9aa6]">(opsional · meningkatkan akurasi)</span></span><label className="relative flex min-h-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-[#b8cddd] bg-[#f8fbff] p-4 text-center transition hover:border-[#1c5fbd]" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop}>{preview ? <><img className="h-[130px] max-w-full rounded-lg object-cover" src={preview} alt="Preview foto anak" /><button className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white text-[#a43b2c] shadow" type="button" onClick={(event) => { event.preventDefault(); clearImage(); }} aria-label="Hapus foto"><X size={16} /></button></> : <span className="grid justify-items-center gap-2 text-[#71838d]"><Upload className="text-[#1c5fbd]" size={25} /><strong className="text-[#405155]">Klik atau seret foto ke sini</strong><small>PNG · JPG · HEIC · WebP · BMP · TIFF · dan lainnya</small></span>}<input className="absolute inset-0 cursor-pointer opacity-0" type="file" id="imageInput" name="image" accept="image/*" onChange={handleFileChange} /></label></div>
               {error && <p className="flex gap-2 rounded-lg border border-[#f1c5be] bg-[#fff1ee] px-4 py-3 text-sm font-semibold text-[#a43b2c]" role="alert"><AlertCircle size={18} />{error}</p>}
               <button className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-[#1c5fbd] font-black text-white shadow-[0_3px_0_#124a98] transition hover:bg-[#174f9d] disabled:cursor-wait disabled:opacity-60" type="submit" disabled={isSubmitting || isReady === false}><Sparkles size={18} />{isSubmitting ? "Menganalisis..." : "Prediksi Sekarang"}</button>
             </form>
           </section>
 
-          <section className="min-h-[420px] rounded-xl border border-[#dce6ef] bg-white p-5 shadow-[0_8px_30px_rgba(35,63,90,0.06)] sm:p-7"><div className="mb-7 flex items-center gap-3 border-b border-[#edf1f5] pb-5"><div className="grid h-11 w-11 place-items-center rounded-xl bg-[#eaf8f5] text-[#168679]"><ImagePlus size={23} /></div><div><h2 className="text-xl font-black text-[#303b45]">Hasil Prediksi</h2><p className="text-sm text-[#71838d]">Ringkasan analisis AI</p></div></div>{prediction ? <div className="grid gap-5"><div className={`rounded-xl p-6 text-center ${prediction.is_stunting ? "bg-[#fff1ee] text-[#a43b2c]" : "bg-[#effaf7] text-[#167564]"}`}><div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-white">{prediction.is_stunting ? <AlertCircle size={30} /> : <CheckCircle2 size={30} />}</div><p className="text-2xl font-black">{prediction.prediction}</p><p className="mt-2 text-sm font-semibold">Confidence {prediction.confidence ?? "-"}%</p></div><div className="flex gap-2 rounded-lg border border-[#f1d9a2] bg-[#fff8e7] p-3 text-xs leading-relaxed text-[#765e24]"><Info className="shrink-0" size={16} />Hasil ini merupakan pendukung keputusan klinis, bukan pengganti diagnosis dokter atau tenaga kesehatan.</div>{saveMessage && <p className="rounded-lg border border-[#b8ded4] bg-[#effaf7] px-4 py-3 text-sm font-semibold text-[#167564]" role="status">{saveMessage}</p>}<div className="grid gap-3 sm:grid-cols-2"><button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#1c5fbd] font-black text-white shadow-[0_3px_0_#124a98] transition hover:bg-[#174f9d] disabled:cursor-wait disabled:opacity-60" type="button" onClick={handleSave} disabled={isSaving}><Save size={16} />{isSaving ? "Menyimpan..." : "Simpan Data"}</button><button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cbd8df] font-black text-[#405155] hover:border-[#1c5fbd] hover:text-[#1c5fbd]" type="button" onClick={() => { setPrediction(null); setSaveMessage(""); }}><RotateCcw size={16} />Prediksi Ulang</button></div></div> : <div className="grid min-h-[300px] place-items-center text-center text-[#8a9aa6]"><div><div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#f1f6fb] text-[#1c5fbd]"><Activity size={30} /></div><p className="font-black text-[#405155]">Belum ada hasil</p><p className="mt-2 max-w-[270px] text-sm leading-relaxed">Isi data klinis anak lalu tekan Prediksi Sekarang untuk melihat hasil analisis.</p></div></div>}</section>
+          <section className="min-h-[420px] rounded-xl border border-[#dce6ef] bg-white p-5 shadow-[0_8px_30px_rgba(35,63,90,0.06)] sm:p-7"><div className="mb-7 flex items-center gap-3 border-b border-[#edf1f5] pb-5"><div className="grid h-11 w-11 place-items-center rounded-xl bg-[#eaf8f5] text-[#168679]"><ImagePlus size={23} /></div><div><h2 className="text-xl font-black text-[#303b45]">Hasil Prediksi</h2><p className="text-sm text-[#71838d]">Ringkasan analisis AI</p></div></div>{prediction ? <div className="grid gap-5"><div className={`rounded-xl p-6 text-center ${prediction.is_stunting ? "bg-[#fff1ee] text-[#a43b2c]" : "bg-[#effaf7] text-[#167564]"}`}><div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-white">{prediction.is_stunting ? <AlertCircle size={30} /> : <CheckCircle2 size={30} />}</div><p className="text-2xl font-black">{prediction.prediction}</p><p className="mt-2 text-sm font-semibold">Confidence {prediction.confidence ?? "-"}%</p></div><div className="flex gap-2 rounded-lg border border-[#f1d9a2] bg-[#fff8e7] p-3 text-xs leading-relaxed text-[#765e24]"><Info className="shrink-0" size={16} />Hasil ini merupakan pendukung keputusan klinis, bukan pengganti diagnosis dokter atau tenaga kesehatan.</div><div className="grid gap-3 sm:grid-cols-2"><button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#1c5fbd] font-black text-white shadow-[0_3px_0_#124a98] transition hover:bg-[#174f9d] disabled:cursor-wait disabled:opacity-60" type="button" onClick={handleSave} disabled={isSaving}><Save size={16} />{isSaving ? "Menyimpan..." : "Simpan Data"}</button><button className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cbd8df] font-black text-[#405155] hover:border-[#1c5fbd] hover:text-[#1c5fbd]" type="button" onClick={() => setPrediction(null)}><RotateCcw size={16} />Prediksi Ulang</button></div></div> : <div className="grid min-h-[300px] place-items-center text-center text-[#8a9aa6]"><div><div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[#f1f6fb] text-[#1c5fbd]"><Activity size={30} /></div><p className="font-black text-[#405155]">Belum ada hasil</p><p className="mt-2 max-w-[270px] text-sm leading-relaxed">Isi data klinis anak lalu tekan Prediksi Sekarang untuk melihat hasil analisis.</p></div></div>}</section>
+          {toast.visible && <div className={`fixed bottom-6 right-6 z-40 w-[min(460px,calc(100vw-2rem))] overflow-hidden rounded-xl border-2 border-[#1E60BD] bg-white p-5 text-[#111827] shadow-[0_12px_35px_rgba(35,63,90,0.22)] ${toast.leaving ? "toast-exit" : "toast-enter"}`} role="status"><div className="flex items-start gap-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#167564] text-white"><Check size={22} strokeWidth={3} /></span><p className="flex-1 pt-1 text-base font-black leading-6 text-[#111827]">{toast.message}</p><button type="button" onClick={dismissToast} className="shrink-0 rounded-md p-1 text-[#71838d] transition hover:bg-[#eaf2ff] hover:text-[#1E60BD]" aria-label="Tutup notifikasi"><X size={19} /></button></div><div className="absolute inset-x-0 bottom-0 h-1 bg-[#dceaff]"><span className="toast-progress block h-full bg-[#1E60BD]" /></div></div>}
     </div>
   );
 }

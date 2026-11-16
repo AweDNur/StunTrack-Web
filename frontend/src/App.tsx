@@ -15,6 +15,7 @@ import LabelPage from "./pages/LabelPage";
 import RoleOverviewPage from "./pages/RoleOverviewPage";
 import VolunteerCommunityPage from "./pages/volunteer/VolunteerCommunityPage";
 import AdminLeaderboardPage from "./pages/admin/AdminLeaderboardPage";
+import AdminParentsPage from "./pages/admin/AdminParentsPage";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="overview" element={<RoleOverviewPage />} />
           <Route path="community" element={<VolunteerCommunityPage />} />
           <Route path="leaderboard" element={<AdminLeaderboardPage />} />
+          <Route path="parents" element={<AdminParentsPage />} />
           <Route path="overview" element={<OverviewPage />} />
           <Route path="growth" element={<ChildGrowthPage />} />
           <Route path="detection" element={<DetectionPage />} />
