@@ -51,10 +51,10 @@ type MetricKey = "stunting" | "nutrition";
 const chartSeries = {
   stunting: {
     label: "Stunting",
-    description: "Children under 5 with height-for-age below expected growth standards.",
+    description: "Anak usia di bawah 5 tahun dengan tinggi badan menurut usia di bawah standar pertumbuhan yang diharapkan.",
     color: "#1c5fbd",
     softColor: "#fff0ec",
-    source: "SSGBI / SSGI / SKI public prevalence reports",
+    source: "Laporan prevalensi publik SSGBI / SSGI / SKI",
     sources: [
       { label: "Kemenkes/BKPK – Tren stunting 2013–2023", href: "https://www.badankebijakan.kemkes.go.id/repositori/id/eprint/5535/1/06%20factsheet%20Gizi%20SKI_bahasa.pdf" },
       { label: "SSGI 2024", href: "https://www.kemkes.go.id/id/ssgi-2024-prevalensi-stunting-nasional-turun-menjadi-198" },
@@ -68,11 +68,11 @@ const chartSeries = {
     ],
   },
   nutrition: {
-    label: "Lack of Nutrition",
-    description: "Wasting or acute undernutrition prevalence among children under 5.",
+    label: "Kurang Gizi",
+    description: "Prevalensi wasting atau kekurangan gizi akut pada anak usia di bawah 5 tahun.",
     color: "#3B75C8",
     softColor: "#eaf8f5",
-    source: "SSGI / SKI public prevalence reports",
+    source: "Laporan prevalensi publik SSGI / SKI",
     sources: [
       { label: "Profil Kesehatan Indonesia 2022", href: "https://www.kemkes.go.id/app_asset/file_content_download/1702958336658115008345c5.53299420.pdf" },
       { label: "Hasil Utama SKI 2023", href: "https://www.badankebijakan.kemkes.go.id/daftar-frequently-asked-question-seputar-hasil-utama-ski-2023/hasil-utama-ski-2023/" },
@@ -129,16 +129,16 @@ function GrowthChart() {
       style={{ "--series": activeSeries.color, "--series-soft": activeSeries.softColor } as CSSProperties}
     >
       <div className="self-center">
-        <Eyebrow>Indonesia Overview</Eyebrow>
+        <Eyebrow>Gambaran Indonesia</Eyebrow>
         <h2 id="chart-title" className="font-serif text-[1.58rem] font-bold uppercase text-[#303b45]">
-          Child growth risk trend
+          Tren risiko pertumbuhan anak
         </h2>
         <p className="mt-4 leading-relaxed text-[#53626b]">
-          Switch between national stunting and acute undernutrition prevalence to compare how
-          child growth indicators are moving year by year.
+          Pilih antara prevalensi stunting nasional dan kekurangan gizi akut untuk membandingkan
+          perubahan indikator pertumbuhan anak dari tahun ke tahun.
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-2.5" aria-label="Select graph metric">
+        <div className="mt-6 flex flex-wrap gap-2.5" aria-label="Pilih indikator grafik">
           {(Object.keys(chartSeries) as MetricKey[]).map((key) => {
             const item = chartSeries[key];
             const isActive = metric === key;
@@ -162,22 +162,22 @@ function GrowthChart() {
 
         <div className="mt-[22px] grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-[#e0e8e5] bg-white p-[15px]">
-            <span className="block text-[0.82rem] font-extrabold text-[#708085]">Latest</span>
+            <span className="block text-[0.82rem] font-extrabold text-[#708085]">Terbaru</span>
             <strong className="my-1 block text-[1.8rem] leading-none text-[var(--series)]">{latest.value}%</strong>
             <small className="block text-[0.82rem] font-extrabold text-[#708085]">{latest.year}</small>
           </div>
           <div className="rounded-lg border border-[#e0e8e5] bg-white p-[15px]">
-            <span className="block text-[0.82rem] font-extrabold text-[#708085]">Year change</span>
+            <span className="block text-[0.82rem] font-extrabold text-[#708085]">Perubahan tahunan</span>
             <strong className="my-1 block text-[1.8rem] leading-none text-[var(--series)]">
               {delta > 0 ? "+" : ""}
               {delta}%
             </strong>
-            <small className="block text-[0.82rem] font-extrabold text-[#708085]">vs {previous.year}</small>
+            <small className="block text-[0.82rem] font-extrabold text-[#708085]">dibanding {previous.year}</small>
           </div>
         </div>
       </div>
 
-      <div className="min-w-0 rounded-lg border border-[#d7e3de] bg-[linear-gradient(180deg,var(--series-soft),#ffffff_46%)] p-4 shadow-[0_15px_34px_rgba(45,68,67,0.1)] sm:p-[22px_22px_16px]">
+      <div key={metric} className="metric-chart-flip min-w-0 rounded-lg border border-[#d7e3de] bg-[linear-gradient(180deg,var(--series-soft),#ffffff_46%)] p-4 shadow-[0_15px_34px_rgba(45,68,67,0.1)] sm:p-[22px_22px_16px]">
         <div className="flex w-full flex-col gap-[18px] text-[var(--series)] sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-[1.1rem] font-black text-[#263744]">{activeSeries.label}</span>
@@ -190,7 +190,7 @@ function GrowthChart() {
           className="mt-2 h-auto w-full overflow-visible"
           viewBox={`0 0 ${width} ${height}`}
           role="img"
-          aria-label={`${activeSeries.label} prevalence line chart in Indonesia`}
+          aria-label={`Grafik garis prevalensi ${activeSeries.label} di Indonesia`}
         >
           {[0, 8, 16, 24, 32].map((tick) => {
             const y = padding.top + ((maxValue - tick) / (maxValue - minValue)) * chartHeight;
@@ -243,10 +243,10 @@ function GrowthChart() {
         </svg>
 
         <p className="m-0 text-[0.83rem] leading-snug text-[#78868a]">
-          Data note: {activeSeries.source}. National prevalence is not an individual diagnosis.
+          Catatan data: {activeSeries.source}. Prevalensi nasional bukan diagnosis individu.
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.83rem] leading-snug text-[#78868a]">
-          <span className="font-black text-[#53626b]">Source:</span>
+          <span className="font-black text-[#53626b]">Sumber:</span>
           {activeSeries.sources.map((source, index) => <span key={source.href}>{index > 0 && <span className="mr-2">·</span>}<a className="font-bold text-[#1c5fbd] underline decoration-[#9db9e8] underline-offset-2 hover:text-[#164a96]" href={source.href} target="_blank" rel="noreferrer">{source.label}</a></span>)}
         </div>
       </div>

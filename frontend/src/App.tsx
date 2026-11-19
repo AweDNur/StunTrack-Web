@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
@@ -17,9 +18,41 @@ import VolunteerCommunityPage from "./pages/volunteer/VolunteerCommunityPage";
 import AdminLeaderboardPage from "./pages/admin/AdminLeaderboardPage";
 import AdminParentsPage from "./pages/admin/AdminParentsPage";
 
+function PageTitleManager() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname.replace(/\/+$/, "") || "/";
+    const titles: Record<string, string> = {
+      "/": "",
+      "/about": "About - How We Started, Our Mission, and Our Team",
+      "/labels": "Labels",
+      "/register": "Register",
+      "/login": "Login",
+      "/dashboard/admin/overview": "Admin Overview",
+      "/dashboard/admin/parents": "Data Orang Tua",
+      "/dashboard/admin/leaderboard": "Admin Leaderboard",
+      "/dashboard/admin/cms": "Admin CMS",
+      "/dashboard/admin/review-training": "Review Data AI",
+      "/dashboard/volunteer/overview": "Volunteer Overview",
+      "/dashboard/volunteer/community": "Community Volunteer",
+      "/dashboard/volunteer/training": "Training Data",
+      "/dashboard/volunteer/history": "Riwayat Volunteer",
+      "/dashboard/orang_tua/overview": "Overview Orang Tua",
+      "/dashboard/orang_tua/growth": "Child Growth",
+      "/dashboard/orang_tua/detection": "Detection",
+    };
+
+    document.title = titles[path] ? `StunTrack | ${titles[path]}` : "StunTrack";
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <PageTitleManager />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />

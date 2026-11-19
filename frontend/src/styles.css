@@ -139,6 +139,25 @@
   overflow: hidden !important;
 }
 
+/* Recreated AI-service guide animation for the Detection guide modal. */
+.photo-guide-preview-box { position: relative; }
+.photo-guide-aura { position: absolute; width: 170px; height: 170px; background: radial-gradient(circle, rgba(0,113,227,.14) 0%, rgba(52,199,89,.09) 60%, transparent 100%); filter: blur(22px); pointer-events: none; animation: photoGuideAuraFloat 5s ease-in-out infinite alternate; }
+@keyframes photoGuideAuraFloat { 0% { transform: translateY(-40px) scale(.92); opacity: .65; } 100% { transform: translateY(45px) scale(1.15); opacity: 1; } }
+.photo-guide-laser-scanner { position: absolute; left: 0; right: 0; height: 2.5px; background: linear-gradient(90deg, transparent 0%, rgba(0,113,227,.3) 15%, #0071E3 50%, rgba(52,199,89,.85) 85%, transparent 100%); box-shadow: 0 0 12px rgba(0,113,227,.45), 0 0 22px rgba(52,199,89,.35); z-index: 5; animation: photoGuideLaserSweep 2.8s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
+.photo-guide-beam-glow { position: absolute; left: 0; right: 0; top: 0; height: 28px; background: linear-gradient(180deg, rgba(0,113,227,.11) 0%, transparent 100%); pointer-events: none; }
+@keyframes photoGuideLaserSweep { 0% { top: 7%; } 100% { top: 90%; } }
+.photo-guide-baby-svg { z-index: 2; filter: drop-shadow(0 6px 18px rgba(0,113,227,.09)); }
+.photo-guide-dot-pulse { animation: photoGuideKpPulse 2s cubic-bezier(.4,0,.2,1) infinite alternate; transform-origin: center; }
+.photo-guide-dot-head { fill: #FF9500; stroke: #FFF; stroke-width: 1.5; filter: drop-shadow(0 2px 6px rgba(255,149,0,.55)); }
+.photo-guide-dot-joint { fill: #0071E3; stroke: #FFF; stroke-width: 1.5; filter: drop-shadow(0 2px 7px rgba(0,113,227,.55)); }
+.photo-guide-dot-limb { fill: #34C759; stroke: #FFF; stroke-width: 1.5; filter: drop-shadow(0 2px 6px rgba(52,199,89,.55)); }
+.photo-guide-dot-foot { fill: #FF2D55; stroke: #FFF; stroke-width: 1.5; filter: drop-shadow(0 2px 6px rgba(255,45,85,.55)); }
+@keyframes photoGuideKpPulse { 0% { opacity: .85; transform: scale(.92); } 100% { opacity: 1; transform: scale(1.24); } }
+.photo-modal-pop { animation: photoModalPop .52s cubic-bezier(.34,1.56,.64,1) both; transform-origin: center; }
+@keyframes photoModalPop { 0% { opacity: 0; transform: scale(.78); } 70% { opacity: 1; transform: scale(1.035); } 100% { opacity: 1; transform: scale(1); } }
+.metric-chart-flip { transform-origin: center; backface-visibility: hidden; animation: metricChartFlip .65s cubic-bezier(.22,.8,.28,1) both; }
+@keyframes metricChartFlip { 0% { opacity: 0; transform: perspective(1200px) rotateY(-88deg) scale(.96); } 55% { opacity: 1; transform: perspective(1200px) rotateY(12deg) scale(1.01); } 100% { opacity: 1; transform: perspective(1200px) rotateY(0deg) scale(1); } }
+
 .stuntrack-map-marker {
   display: grid;
   place-items: center;
