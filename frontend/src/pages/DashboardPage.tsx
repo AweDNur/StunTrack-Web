@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 // Tambahkan FileText (untuk CMS) dan Image (untuk Training Data) ke import lucide-react
-import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Baby, ClipboardList, LayoutDashboard, LogOut, ShieldCheck, Sparkles, Users, FileText, Image as ImageIcon, HistoryIcon, ChevronLeft, ChevronRight, UserRound } from "lucide-react";
 import { Link, Navigate, useNavigate, useParams, Outlet, useLocation } from "react-router-dom";
 
 import logo from "../assets/logo-stuntrack.png";
@@ -24,6 +24,7 @@ const sidebarItems = {
   ],
   admin: [
     { label: "Overview", icon: LayoutDashboard, path: "overview" },
+    { label: "Data Orang Tua", icon: UserRound, path: "parents" },
     { label: "Leaderboard", icon: Users, path: "leaderboard" },
     { label: "Kelola Konten", icon: FileText, path: "cms" },
     { label: "Review Data AI", icon: ImageIcon, path: "review-training" },

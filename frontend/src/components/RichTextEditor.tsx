@@ -3,7 +3,8 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
-import { Bold, Heading1, Heading2, Image as ImageIcon, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Undo2 } from "lucide-react";
+import TextAlign from "@tiptap/extension-text-align";
+import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Heading1, Heading2, Image as ImageIcon, Italic, Link2, List, ListOrdered, Quote, Redo2, RemoveFormatting, Undo2 } from "lucide-react";
 
 type Props = { value: string; onChange: (value: string) => void; placeholder?: string; rows?: number };
 
@@ -36,6 +37,7 @@ export default function RichTextEditor({ value, onChange, placeholder = "Tulis k
       StarterKit.configure({ heading: { levels: [1, 2] } }),
       Link.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
       Image.configure({ inline: false, allowBase64: false }),
+      TextAlign.configure({ types: ["heading", "paragraph"], alignments: ["left", "center", "right", "justify"], defaultAlignment: "left" }),
     ],
     content: normalizeEditorContent(value),
     onUpdate: ({ editor: currentEditor }) => onChange(currentEditor.getHTML()),
@@ -67,6 +69,10 @@ export default function RichTextEditor({ value, onChange, placeholder = "Tulis k
     { label: "Link", icon: <Link2 size={17} />, active: editor.isActive("link"), action: addLink },
     { label: "Heading 1", icon: <Heading1 size={17} />, active: editor.isActive("heading", { level: 1 }), action: () => editor.chain().focus().toggleHeading({ level: 1 }).run() },
     { label: "Heading 2", icon: <Heading2 size={17} />, active: editor.isActive("heading", { level: 2 }), action: () => editor.chain().focus().toggleHeading({ level: 2 }).run() },
+    { label: "Rata kiri", icon: <AlignLeft size={17} />, active: editor.isActive({ textAlign: "left" }), action: () => editor.chain().focus().setTextAlign("left").run() },
+    { label: "Rata tengah", icon: <AlignCenter size={17} />, active: editor.isActive({ textAlign: "center" }), action: () => editor.chain().focus().setTextAlign("center").run() },
+    { label: "Rata kanan", icon: <AlignRight size={17} />, active: editor.isActive({ textAlign: "right" }), action: () => editor.chain().focus().setTextAlign("right").run() },
+    { label: "Rata kiri-kanan", icon: <AlignJustify size={17} />, active: editor.isActive({ textAlign: "justify" }), action: () => editor.chain().focus().setTextAlign("justify").run() },
     { label: "Quote", icon: <Quote size={17} />, active: editor.isActive("blockquote"), action: () => editor.chain().focus().toggleBlockquote().run() },
     { label: "Bullet list", icon: <List size={17} />, active: editor.isActive("bulletList"), action: () => editor.chain().focus().toggleBulletList().run() },
     { label: "Numbered list", icon: <ListOrdered size={17} />, active: editor.isActive("orderedList"), action: () => editor.chain().focus().toggleOrderedList().run() },

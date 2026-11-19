@@ -27,7 +27,7 @@ function IndonesiaMapView() {
   useEffect(() => {
     map.setMaxBounds(indonesiaBounds);
     map.setMinZoom(4);
-    map.setMaxZoom(13);
+    map.setMaxZoom(14);
   }, [map]);
   return null;
 }
@@ -402,7 +402,7 @@ function IndonesiaMap() {
 
   return <section className="border-t border-[#ede4dc] bg-[#f7fbf8] px-6 py-8 md:px-12 md:py-10" aria-labelledby="map-title">
     <div className="mb-5 text-center"><Eyebrow>Community Coverage</Eyebrow><h2 id="map-title" className="font-serif text-[1.58rem] font-bold uppercase text-[#303b45]">StunTrack di Indonesia</h2><p className="mx-auto mt-2 max-w-2xl text-[#607178]">Pinpoint menunjukkan jumlah dataset berdasarkan wilayah yang dipilih volunteer.</p></div>
-    <div className="overflow-hidden rounded-xl border border-[#c9ddd8] bg-white p-2 shadow-[0_15px_34px_rgba(45,68,67,0.1)]"><MapContainer center={mapCenter} zoom={4} minZoom={4} maxZoom={13} maxBounds={indonesiaBounds} maxBoundsViscosity={1} scrollWheelZoom className="h-[360px] w-full rounded-lg sm:h-[460px]"><IndonesiaMapView /><TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{points.map((point) => <Marker key={point.region_code} position={pointPosition(point)} icon={countIcon(point.total)}><Popup><strong>{point.region_name}</strong><br />{point.city_name}<br />{point.province_name}<br /><b>{point.total}</b> dataset</Popup></Marker>)}</MapContainer></div>
+    <div className="overflow-hidden rounded-xl border border-[#c9ddd8] bg-white p-2 shadow-[0_15px_34px_rgba(45,68,67,0.1)]"><MapContainer center={mapCenter} zoom={4} minZoom={4} maxZoom={14} maxBounds={indonesiaBounds} maxBoundsViscosity={1} scrollWheelZoom className="h-[360px] w-full rounded-lg sm:h-[460px]"><IndonesiaMapView /><TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />{points.map((point) => <Marker key={point.region_code} position={pointPosition(point)} icon={countIcon(point.total)}><Popup><strong>{point.region_name}</strong><br />{point.city_name}<br />{point.province_name}<br /><b>{point.total}</b> dataset</Popup></Marker>)}</MapContainer></div>
     <p className="mt-3 text-center text-xs text-[#78868a]">Lokasi marker dibuat sebagai perkiraan wilayah untuk menjaga privasi.</p>
   </section>;
 }
