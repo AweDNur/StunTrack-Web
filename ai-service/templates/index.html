@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261118_v5" />
 </head>
 <body>
 
@@ -29,11 +29,11 @@
     </div>
     <div class="status-pill" id="statusPill">
       <span class="status-dot" id="statusDot"></span>
-      <span id="statusText">Menghubungkan…</span>
+      <span id="statusText" style="display:none;"></span>
     </div>
   </header>
 
-  <!-- ══ ALERT ════════════════════════════════════════════════ -->
+  <!-- ══ ALERT BAR ════════════════════════════════════════════ -->
   <div class="alert-bar" id="alertBar" style="display:none;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span id="alertText"></span>
@@ -126,25 +126,37 @@
           <span class="err-msg" id="err_ll_cm"></span>
         </div>
 
-        <!-- Foto -->
+        <!-- Foto dengan Verifikasi 2-Langkah Sebelum Upload -->
         <div class="field">
-          <label class="lbl">
-            Foto Anak
-            <span class="badge-opt">opsional · meningkatkan akurasi</span>
-          </label>
+          <div class="lbl-flex">
+            <label class="lbl">
+              Foto Anak
+              <span class="badge-opt">opsional · meningkatkan akurasi</span>
+            </label>
+            <button type="button" class="btn-guide-link" id="btnOpenGuideDirect">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 16v-4m0-4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Lihat Panduan Foto
+            </button>
+          </div>
+
+          <input type="file" id="imageInput" name="image" accept="image/*" style="display:none;" />
           <div class="dropzone" id="uploadZone">
-            <input type="file" id="imageInput" name="image" accept="image/*" class="dropzone-input" />
             <div class="dz-idle" id="uploadIdle">
               <div class="dz-icon-wrap">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>
-              <span class="dz-title">Klik atau seret foto ke sini</span>
-              <span class="dz-sub">PNG · JPG · HEIC · WebP · BMP · TIFF · dan lainnya</span>
+              <span class="dz-title">Klik atau seret foto bayi ke sini</span>
+              <span class="dz-sub">Khusus Foto Bayi / Balita (Usia 0–60 Bulan)</span>
+            </div>
+            <div class="dz-validating" id="uploadValidating" style="display:none;">
+              <span class="spinner" style="width:20px;height:20px;border-width:2px;border-color:rgba(75,108,247,.2);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;"></span>
+              <span class="dz-val-text" style="font-size:.82rem;font-weight:600;color:var(--blue);">Memeriksa biometrik &amp; postur bayi...</span>
             </div>
             <div class="dz-done" id="uploadDone" style="display:none;">
               <img id="previewImg" src="" alt="Preview" class="dz-preview" />
               <div class="dz-info">
                 <span id="previewName" class="dz-filename"></span>
+                <span class="dz-verified-badge" id="previewBadge">✓ Foto Bayi Terverifikasi</span>
                 <button type="button" id="removeImg" class="dz-remove" aria-label="Hapus">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
                 </button>
@@ -153,7 +165,7 @@
           </div>
         </div>
 
-        <!-- Tombol -->
+        <!-- Tombol Prediksi -->
         <button type="submit" class="btn-primary" id="btnSubmit">
           <span id="btnLabel">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -171,7 +183,7 @@
     <!-- ── RESULT PANEL ──────────────────────────────────────── -->
     <div class="card card-result" id="panelResult">
 
-      <!-- Idle -->
+      <!-- Idle State -->
       <div id="stateIdle" class="r-state r-idle">
         <div class="idle-body">
           <div class="idle-circle">
@@ -184,20 +196,55 @@
         </div>
       </div>
 
-      <!-- Output -->
+      <!-- Output State -->
       <div id="stateOutput" class="r-state" style="display:none;">
 
+        <!-- Verdict Card -->
         <div class="verdict-box" id="verdictBox">
           <div class="v-emoji" id="verdictEmoji"></div>
           <div class="v-label" id="verdictLabel"></div>
           <div class="v-desc"  id="verdictDesc"></div>
+          <div class="v-meta" id="verdictMeta">
+            <span class="meta-tag" id="tagConf">Confidence: -</span>
+          </div>
         </div>
 
+        <!-- Visualisasi Citra Asli & Hasil Landmark MediaPipe (Point 2) -->
+        <div class="mp-result-section" id="mpResultSection" style="display:none;">
+          <div class="mp-section-head">
+            <div class="mp-title-wrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="2"/></svg>
+              <strong>Visualisasi Citra &amp; Landmark MediaPipe</strong>
+            </div>
+            <span class="mp-badge-count" id="mpBadgeCount">33 Landmark Terdeteksi</span>
+          </div>
+
+          <div class="dual-image-grid">
+            <div class="img-card">
+              <div class="img-card-header">Foto Asli Anak</div>
+              <div class="img-card-frame">
+                <img id="resOriginalImg" src="" alt="Foto Asli" />
+              </div>
+            </div>
+
+            <div class="img-card">
+              <div class="img-card-header img-card-header-ai">Landmark Keypoints (MediaPipe)</div>
+              <div class="img-card-frame">
+                <img id="resAnnotatedImg" src="" alt="Landmark Keypoints" />
+              </div>
+            </div>
+          </div>
+
+
+        </div>
+
+        <!-- Disclaimer -->
         <div class="disclaimer-box">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 8v4m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           Hasil ini bersifat <strong>pendukung keputusan klinis</strong> dan bukan pengganti diagnosis dokter atau tenaga kesehatan.
         </div>
 
+        <!-- Tombol Reset -->
         <button type="button" class="btn-secondary" id="btnReset">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Prediksi Ulang
@@ -205,13 +252,13 @@
 
       </div>
 
-      <!-- Error -->
+      <!-- Error State -->
       <div id="stateError" class="r-state r-error" style="display:none;">
         <div class="error-body">
           <div class="error-circle">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
           </div>
-          <p class="error-title">Terjadi Kesalahan</p>
+          <p class="error-title" id="errTitle">Terjadi Kesalahan</p>
           <p class="error-msg" id="errMsg"></p>
           <button type="button" class="btn-secondary" id="btnResetErr">Coba Lagi</button>
         </div>
@@ -220,6 +267,173 @@
     </div>
   </main>
 
-  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <!-- ══ MODAL PANDUAN & VERIFIKASI UNGGAH FOTO (2-LANGKAH) ══════════════ -->
+  <div class="modal-backdrop" id="guideModal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="modal-card">
+
+      <!-- Header Modal -->
+      <div class="modal-head">
+        <div class="modal-step-badge">
+          <span class="step-num">Langkah 1 dari 2</span>
+          <span class="step-txt">Verifikasi Standar Citra Bayi</span>
+        </div>
+        <button type="button" class="modal-close" id="btnCloseGuide" aria-label="Tutup Panduan">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <h2 class="modal-title" id="guideTitle">Panduan Standar Citra Bayi</h2>
+
+      <!-- Modal Body (2 Kolom: Animasi & Kriteria) -->
+      <div class="modal-grid">
+
+        <!-- Kolom Kiri: Animasi Contoh Gambar Valid (Apple Style Light Design) -->
+        <div class="guide-anim-col">
+          <div class="anim-preview-box">
+            <!-- Ambient Apple-style soft blurred aura -->
+            <div class="apple-scan-aura"></div>
+
+            <!-- Animated Apple-style Laser Scan Line & Sweep Beam -->
+            <div class="laser-scanner">
+              <div class="laser-beam-glow"></div>
+            </div>
+
+            <!-- SVG Skeleton Illustration of Baby (Bright Apple Aesthetics) -->
+            <svg class="baby-svg-demo" viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="appleBodyFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0071E3" stop-opacity="0.08"/>
+                  <stop offset="100%" stop-color="#34C759" stop-opacity="0.12"/>
+                </linearGradient>
+                <linearGradient id="appleLineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#0071E3"/>
+                  <stop offset="100%" stop-color="#34C759"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Body Silhouette Contour (Crisp & Clean) -->
+              <ellipse cx="100" cy="55" rx="26" ry="32" fill="url(#appleBodyFill)" stroke="#0071E3" stroke-width="1.8" stroke-dasharray="4,4" stroke-opacity="0.45"/>
+              <path d="M 66 94 C 66 86, 78 84, 100 84 C 122 84, 134 86, 134 94 L 128 176 C 128 184, 120 188, 100 188 C 80 188, 72 184, 72 176 Z" fill="url(#appleBodyFill)" stroke="#0071E3" stroke-width="1.8" stroke-dasharray="4,4" stroke-opacity="0.45"/>
+
+              <!-- Skeleton Lines (Smooth Apple Health Gradient) -->
+              <g class="skeleton-lines-group" stroke="url(#appleLineGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Torso Box -->
+                <line x1="72" y1="98" x2="128" y2="98" />
+                <line x1="72" y1="98" x2="78" y2="175" />
+                <line x1="128" y1="98" x2="122" y2="175" />
+                <line x1="78" y1="175" x2="122" y2="175" />
+                <!-- Left Arm -->
+                <line x1="72" y1="98" x2="52" y2="135" />
+                <line x1="52" y1="135" x2="42" y2="170" />
+                <!-- Right Arm -->
+                <line x1="128" y1="98" x2="148" y2="135" />
+                <line x1="148" y1="135" x2="158" y2="170" />
+                <!-- Left Leg -->
+                <line x1="78" y1="175" x2="74" y2="235" />
+                <line x1="74" y1="235" x2="70" y2="285" />
+                <!-- Right Leg -->
+                <line x1="122" y1="175" x2="126" y2="235" />
+                <line x1="126" y1="235" x2="130" y2="285" />
+              </g>
+
+              <!-- Pulsing Landmarks (Keypoints) -->
+              <g class="skeleton-dots-group">
+                <circle cx="100" cy="55" r="5" class="dot-pulse dot-head" />
+                <circle cx="86" cy="48" r="3.5" class="dot-pulse dot-head" />
+                <circle cx="114" cy="48" r="3.5" class="dot-pulse dot-head" />
+                <circle cx="72" cy="98" r="5.5" class="dot-pulse dot-joint" />
+                <circle cx="128" cy="98" r="5.5" class="dot-pulse dot-joint" />
+                <circle cx="52" cy="135" r="4.5" class="dot-pulse dot-limb" />
+                <circle cx="148" cy="135" r="4.5" class="dot-pulse dot-limb" />
+                <circle cx="42" cy="170" r="4" class="dot-pulse dot-limb" />
+                <circle cx="158" cy="170" r="4" class="dot-pulse dot-limb" />
+                <circle cx="78" cy="175" r="5.5" class="dot-pulse dot-joint" />
+                <circle cx="122" cy="175" r="5.5" class="dot-pulse dot-joint" />
+                <circle cx="74" cy="235" r="5" class="dot-pulse dot-limb" />
+                <circle cx="126" cy="235" r="5" class="dot-pulse dot-limb" />
+                <circle cx="70" cy="285" r="4.5" class="dot-pulse dot-foot" />
+                <circle cx="130" cy="285" r="4.5" class="dot-pulse dot-foot" />
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Kolom Kanan: Detail Kriteria Valid & Ditolak -->
+        <div class="guide-text-col">
+
+          <div class="crit-box crit-valid">
+            <div class="crit-head text-green">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span>Kriteria Gambar yang DITERIMA</span>
+            </div>
+            <ul class="crit-list">
+              <li><strong>Foto seluruh tubuh (Full-Body)</strong>: tampak utuh dari kepala hingga telapak kaki tanpa terpotong.</li>
+              <li><strong>Posisi tegak/lurus</strong>: bayi berbaring lurus (supine) pada alas datar atau berdiri menghadap kamera.</li>
+              <li><strong>Pencahayaan terang &amp; jelas</strong>: tidak buram, tidak backlight, dan tidak gelap.</li>
+              <li><strong>Pakaian minim/ringan</strong>: persendian siku, pinggul, dan lutut terlihat agar pengukuran presisi.</li>
+            </ul>
+          </div>
+
+          <div class="crit-box crit-invalid">
+            <div class="crit-head text-red">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>Kriteria Gambar yang DITOLAK (Gagal Prediksi)</span>
+            </div>
+            <ul class="crit-list">
+              <li><strong>Bukan manusia / bukan bayi</strong> (hewan, kendaraan, kartun, pemandangan, benda).</li>
+              <li><strong>Foto terpotong</strong> (hanya wajah/pasfoto, setengah badan, atau terhalang selimut).</li>
+              <li><strong>Foto sangat gelap/buram berat</strong> sehingga sendi tubuh tidak dapat dikenali AI.</li>
+            </ul>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer Modal: Langkah 2 Verifikasi & Konfirmasi -->
+      <div class="modal-foot">
+        <label class="confirm-wrap" id="wrapConfirmGuide">
+          <input type="checkbox" id="chkConfirmGuide" />
+          <span class="confirm-text">
+            <strong>Saya telah paham &amp; membaca panduan</strong> dan memastikan foto yang saya unggah memenuhi seluruh kriteria di atas.
+          </span>
+        </label>
+
+        <div class="modal-btn-row">
+          <button type="button" class="btn-cancel" id="btnCancelGuide">Batal</button>
+          <button type="button" class="btn-proceed" id="btnProceedUpload" disabled>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2zM12 11v6m-3-3l3-3 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Buka Folder &amp; Pilih Foto
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ MODAL ALERT GAMBAR TIDAK VALID (Point 3) ═══════════════ -->
+  <div class="modal-backdrop" id="invalidImageModal" style="display:none;" role="dialog" aria-modal="true">
+    <div class="modal-card modal-card-sm">
+      <div class="alert-modal-content">
+        <div class="alert-modal-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>
+        </div>
+        <h3 class="alert-modal-title">Foto Ditolak oleh Sistem AI</h3>
+        <p class="alert-modal-msg" id="invalidImageMsg">Foto tidak valid atau bukan gambar bayi yang memenuhi standar analisis.</p>
+        <div class="alert-modal-tips">
+          <strong>Saran:</strong> Pastikan Anda mengunggah foto bayi/balita (0–60 bulan) seluruh tubuh dari kepala hingga kaki dalam posisi lurus dengan pencahayaan yang jelas.
+        </div>
+        <div class="alert-modal-btn-row">
+          <button type="button" class="btn-primary" id="btnRetryPhoto">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Pilih Foto Lain Sesuai Panduan
+          </button>
+          <button type="button" class="btn-secondary" id="btnCloseInvalidModal">Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}?v=20261118_v5"></script>
 </body>
 </html>

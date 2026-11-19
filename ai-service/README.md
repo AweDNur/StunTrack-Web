@@ -1,51 +1,65 @@
-# StunTrack v13 — Web Application
+# StunTrack v13 — AI Service & Inference Platform
 
-Aplikasi web inferensi untuk prediksi stunting anak menggunakan model **B3 Late Fusion** (Tabular + MediaPipe Pose → Logistic Regression Meta-Learner).
+Layanan inferensi AI untuk deteksi risiko stunting anak menggunakan model **B3 Late Fusion Stacking** (Tabular + MediaPipe Pose + BorderlineSMOTE → Logistic Regression Meta-Learner), dilatih pada **100% dataset** (346 sampel) berdasarkan hasil analisis penelitian pada `Penelitian_Pak_Yoh.ipynb`.
+
+---
+
+## Fitur Utama
+
+1. **Model AI Terbaik (100% Data Training)**:
+   - Skenario pemenang: **B3 Late Fusion Stacking** (AUC = 0.8862, Acc = 83.65%, BalAcc = 84.34%, Spec = 91.49%).
+   - Dilatih pada 100% data DS1 (StunTrack) + DS2 (Neonatal), total 346 sampel fisik anak.
+   - Menggabungkan probabilitas out-of-fold dari 6 base tabular models dan 6 base mediapipe pose models ke dalam 24d meta-features yang diimbangi dengan BorderlineSMOTE, lalu diprediksi oleh Logistic Regression meta-learner terkalibrasi.
+2. **Visualisasi Citra Asli & MediaPipe Keypoints (33 Landmark Sendi)**:
+   - Mengembalikan citra asli dan citra hasil anotasi 33 titik sendi MediaPipe secara berdampingan (side-by-side).
+   - Menampilkan koneksi rangka biometrik bercahaya (cyan/emerald) dan titik sendi anatomis berwarna.
+3. **Validasi Ketat Gambar Non-Manusia & Non-Bayi**:
+   - Menolak secara otomatis gambar yang bukan manusia (hewan, kendaraan, pemandangan, dokumen/kartun, pola acak).
+   - Memvalidasi kelengkapan sendi tubuh (bahu, pinggul, tungkai kaki) dan proporsi pediatrik (bayi/balita).
+   - Menampilkan alert peringatan penolakan gambar dan mencegah prediksi salah jika gambar tidak valid.
+4. **Verifikasi 2 Langkah & Panduan Interaktif Sebelum Unggah Citra**:
+   - Muncul sebelum browser membuka folder file picker.
+   - Menampilkan animasi interaktif simulasi pelacakan sendi tubuh bayi dengan pemindai laser (laser scanner).
+   - Menampilkan panduan kriteria gambar valid vs gambar ditolak.
+   - Tombol buka folder file picker hanya aktif setelah pengguna mengonfirmasi pemahaman panduan.
 
 ---
 
 ## Struktur File
 
 ```
-website/
-├── app.py                  ← Flask backend (inferensi)
-├── requirements.txt        ← Dependensi Python
+ai-service/
+├── app.py                            ← Flask backend & API inferensi
+├── requirements.txt                  ← Dependensi Python (pinned scikit-learn==1.6.1)
+├── pose_landmarker.task              ← Model MediaPipe Pose Landmarker (Heavy)
+├── stuntrack_v13_b3_lr_model.joblib  ← Model AI final B3 Late Fusion (100% data)
+├── stuntrack_v13_model_artifacts.json← Metadata artefak model
 ├── README.md
 ├── templates/
-│   └── index.html          ← Halaman utama
-├── static/
-│   ├── css/
-│   │   └── style.css       ← Styling premium dark UI
-│   └── js/
-│       └── main.js         ← JavaScript frontend
-└── uploads/                ← Folder sementara upload gambar (auto-dibuat)
+│   └── index.html                    ← Web UI dengan modal verifikasi 2 langkah
+└── static/
+    ├── css/
+    │   └── style.css                 ← Styling modern & animasi laser scanner
+    └── js/
+        └── main.js                   ← Logika interaktif verifikasi & visualisasi
 ```
 
 ---
 
 ## Cara Menjalankan
 
-### 1. Ekspor model terlebih dahulu
-Jalankan `build model.py` di Google Colab hingga selesai. Unduh file:
-- `stuntrack_v13_b3_lr_model.joblib`
-
-Letakkan file tersebut di **satu folder di atas** folder `website/`, yaitu di:
-```
-2 kelas/stuntrack_v13_b3_lr_model.joblib
-```
-
-### 2. Install dependensi
+### 1. Buat Virtual Environment & Pasang Dependensi
 ```bash
-cd website
+cd "Website Final/ai-service"
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-> **Catatan**: `mediapipe` tidak tercantum di `requirements.txt` karena versinya perlu dicoba bertahap. Install manual:
-> ```bash
-> pip install mediapipe
-> ```
+> **Penting**: Gunakan `scikit-learn==1.6.1` sesuai `requirements.txt` agar artefak model joblib dapat dimuat tanpa kendala modul `_loss`.
 
-### 3. Jalankan server
+### 2. Jalankan Server
 ```bash
 python app.py
 ```
@@ -54,45 +68,8 @@ Server berjalan di: **http://localhost:5000**
 
 ---
 
-## Input yang Diterima
+## Endpoint API
 
-### Tabular (wajib — 5 fitur)
-| Field | Nama | Satuan | Rentang |
-|-------|------|--------|---------|
-| `usia_bulan` | Usia anak | bulan | 0–60 |
-| `jk` | Jenis kelamin | P=0, L=1 | 0 atau 1 |
-| `bb_kg` | Berat badan | kg | 0.1–30 |
-| `lk_cm` | Lingkar kepala | cm | 5–70 |
-| `ll_cm` | Lingkar lengan atas | cm | 3–40 |
-
-### Gambar (opsional — meningkatkan akurasi)
-Format yang didukung: `PNG, JPG, JPEG, BMP, TIFF, GIF, WebP, HEIC, AVIF, JP2, JFIF, PPM, PGM`
-
-Gambar diproses dengan:
-- CLAHE color enhancement
-- Resize 512×512
-- MediaPipe Pose Landmarker → 69 fitur geometri tubuh
-
----
-
-## Output Prediksi
-
-```json
-{
-  "prediction": "Stunting",
-  "is_stunting": true,
-  "confidence": 87.5,
-  "proba_stunting": 87.5,
-  "proba_tidak_stunting": 12.5,
-  "mp_detected": true,
-  "model_ready": true
-}
-```
-
----
-
-## Catatan
-
-- Jika model belum tersedia, server tetap berjalan dan menampilkan pesan informatif di UI.
-- File gambar yang diunggah dihapus otomatis setelah prediksi.
-- Aplikasi ini **hanya untuk keperluan akademis/penelitian**, bukan pengganti diagnosis medis.
+- `GET /api/status` atau `GET /status`: Status kesiapan model AI dan pustaka (MediaPipe, OpenCV, PIL).
+- `POST /api/validate-image`: Pra-validasi cepat citra sebelum unggah; menolak citra bukan bayi, bukan manusia, atau manusia dewasa (HTTP 400). Mengembalikan jumlah landmark dan citra beranotasi keypoints jika valid (HTTP 200).
+- `POST /api/predict` atau `POST /predict`: Melakukan inferensi stunting multimodal (menerima form-data 5 parameter klinis tabular dan opsional berkas gambar). Mendukung alias nama field (cth. `gender` / `jk`, `age_months` / `usia_bulan`). Mengembalikan prediksi, confidence, probabilitas, dan visualisasi side-by-side citra asli vs anotasi MediaPipe.
